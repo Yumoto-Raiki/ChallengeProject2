@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/UI%20Toolkit/Uss/Uss.uss?fileID=7433441132597879392&amp;guid=a0455ffa90b1cbd4fad18071d937a502&amp;type=3#Uss" />
+    <ui:VisualElement name="SetObject" style="flex-grow: 1; background-color: rgba(67, 88, 144, 0.91); background-image: none; -unity-background-image-tint-color: rgba(255, 255, 255, 0.67); width: 100%; height: 100%; flex-direction: column;">
+        <ui:Label tabindex="-1" text="説明　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　" display-tooltip-when-elided="true" name="Explanation" style="font-size: 20px; color: rgb(255, 255, 255); -unity-text-outline-color: rgba(118, 118, 118, 0.98); -unity-text-outline-width: 1px;" />
+        <ui:Label tabindex="-1" text="このエディターは設定したオブジェクトを&#10;いろいろな方法でコピーし配置できるエディターです。" display-tooltip-when-elided="true" name="MainText" style="height: 45px; color: rgb(255, 255, 255);" />
+        <uie:ObjectField label="配置するオブジェクト" name="CopyObject" style="flex-direction: row; color: rgb(255, 255, 255); height: 22px;" />
+        <ui:ScrollView style="height: 358px;">
+            <ui:Foldout text="クリック配置" value="false" style="color: rgb(255, 255, 255); height: 115px;">
+                <ui:IntegerField label="配置数" value="1" name="SetCount" />
+                <ui:Button text="クリックモード" display-tooltip-when-elided="true" name="ClickModeButton" selectable="false" />
+                <ui:Label tabindex="-1" text="稼働中" display-tooltip-when-elided="true" name="ClickModeRunning" />
+            </ui:Foldout>
+            <ui:Foldout text="埋める" value="false" style="color: rgb(255, 255, 255); height: 86px;">
+                <ui:Button text="フィルモード" display-tooltip-when-elided="true" name="Button" />
+            </ui:Foldout>
+            <ui:Foldout text="壁均し" value="false" name="Foldout" style="color: rgb(255, 255, 255); height: 58px;">
+                <ui:Button text="均す" display-tooltip-when-elided="true" name="FixButton" />
+            </ui:Foldout>
+            <ui:Foldout text="ステージ調整" style="color: rgb(255, 255, 255);">
+                <ui:Slider label="高さ" value="0" high-value="100" name="Height" />
+                <ui:Slider label="起伏" value="1" high-value="100" name="TerrainRoughness" />
+                <ui:Slider label="坂の間隔" value="0" high-value="1" name="Slope" style="color: rgb(255, 255, 255); height: 25px;" />
+                <ui:Toggle label="ブロック変更" name="ChangeBlock" style="-unity-text-outline-color: rgba(0, 0, 0, 0); opacity: 1; background-color: rgba(0, 0, 0, 0); cursor: initial; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0);" />
+                <ui:Button text="地面変更" display-tooltip-when-elided="true" name="GroundChangeButton" />
+            </ui:Foldout>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>
