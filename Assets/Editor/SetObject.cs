@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Codice.Client.BaseCommands;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static UnityEngine.GraphicsBuffer;
 /// <summary>
 /// オブジェクトを配置するためのツール
 /// 湯元
@@ -59,14 +62,8 @@ public class SetObject : EditorWindow
         };
         InitialClickMode();
         SceneView.duringSceneGui += OnSceneGUI;
-        WallFix();
-
-    }
-
-    private void OnSceneGUI(SceneView sceneView)
-    {
-
-        OnSetObject();
+        InitialWallFix();
+        InitialGroundChange();
 
     }
 
@@ -98,6 +95,210 @@ public class SetObject : EditorWindow
 
     }
 
+    /// <summary>
+    ///壁を均して隙間を埋める処理
+    /// </summary>
+    private void InitialWallFix()
+    {
+
+        // ボタンを取得し押されたとき用に関数を登録
+        Button clickButton = (Button)rootVisualElement.Q<Button>("FixButton");
+        clickButton.clicked += () =>
+        {
+
+            List<GameObject> objs = new List<GameObject>();
+            foreach (var objct in Selection.objects)
+            {
+                if (!(objct is GameObject obj))
+                {
+
+                    continue;
+
+                }
+                objs.Add(obj);
+            }
+            for (int i = 0; i < objs.Count; i++)
+            {
+
+                Undo.RecordObject(objs[i].transform, "FixObj");
+                Vector3 pos = objs[i].transform.position;
+                // 半分
+                float yPos = pos.y;
+                // 高さを0にして代入
+                pos.y = 0;
+                objs[i].transform.position = pos;
+
+                Vector3 scale = objs[i].transform.localScale;
+                // 高さを幅に変換
+                scale.y = yPos / 2 + 1;
+                objs[i].transform.localScale = scale;
+               
+            }
+
+        };
+
+    }
+
+    /// <summary>
+    /// 地面の状態を変更
+    /// </summary>
+    private void InitialGroundChange()
+    {
+
+        // ボタンを取得し押されたとき用に関数を登録
+        Button clickButton = rootVisualElement.Q<Button>("GroundChangeButton");
+        clickButton.clicked += () =>
+        {
+
+            // 地面の基本の高さ
+            Slider maxHeight = rootVisualElement.Q<Slider>("MaxHeight");
+            // 起伏
+            Slider terrainRoughness = rootVisualElement.Q<Slider>("TerrainRoughness");
+            // 斜傾（ブロック〇個分）
+            Slider slope = rootVisualElement.Q<Slider>("Slope");
+            // ブロック変更
+            Toggle isChangeBlock = rootVisualElement.Q<Toggle>("ChangeBlock");
+            // マップ生成
+            GameObject[,] map = CreatMap();
+            // 高さの調整、条件次第でオブジェクトの変更をかける
+            // 行
+            for (int i = 0; i < map.GetLength(0); i++)
+            {
+
+                //列
+                for (int j = 0; j < map.GetLength(1); j++)
+                {
+
+                    if(map[i, j] == null)
+                    {
+
+                        continue;
+
+                    }
+                    Undo.RecordObject(map[i, j].transform, "ChangeObj");
+                    // 補正した高さを戻す
+                    Vector3 pos = map[i, j].transform.position;
+                    Debug.Log(pos);
+                    Debug.Log(slope);
+                    // ノイズを使用し高さを出す
+                    int height = (int)(Mathf.PerlinNoise(pos.x + slope.value,pos.z + slope.value) * terrainRoughness.value);
+                    pos.y = height * 2;
+                    map[i, j].transform.position = pos;
+
+                }
+
+            }
+
+
+        };
+
+
+    }
+
+    private GameObject[,] CreatMap()
+    {
+
+        // 選択中のブロックを取得
+        List<GameObject> objs = new List<GameObject>();
+        foreach (var objct in Selection.objects)
+        {
+
+            // ゲームオブジェクトのみ抜き出す
+            if (!(objct is GameObject obj))
+            {
+
+                continue;
+
+            }
+            objs.Add(obj);
+
+        }
+        if(objs.Count == 0)
+        {
+
+            return null;
+
+        }
+        // まず最大と最小サイズを見積もる（幅・奥行き）
+        float maxX = float.MinValue;
+        float maxZ = float.MinValue;
+        float minX = float.MaxValue;
+        float minZ = float.MaxValue;
+        // 地面を平らにしながらサイズを見積もる
+        for (int i = 0; i < objs.Count; i++)
+        {
+
+            if (objs[i].transform.position.x > maxX)
+            {
+
+                maxX = objs[i].transform.position.x;
+
+            }
+            if (objs[i].transform.position.z > maxZ)
+            {
+
+                maxZ = objs[i].transform.position.z;
+
+            }
+            if (objs[i].transform.position.x < minX)
+            {
+
+                minX = objs[i].transform.position.x;
+
+            }
+            if (objs[i].transform.position.z < minZ)
+            {
+
+                minZ = objs[i].transform.position.z;
+
+            }
+            objs[i].transform.localScale = Vector3.one;
+            Vector3 pos = objs[i].transform.position;
+            pos.y = 0;
+            objs[i].transform.position = pos;
+
+        }
+        // X軸のブロックの個数
+        int widthCount = Mathf.CeilToInt(maxX - minX) + 1;
+        // Z軸のブロックの個数
+        int depthCount = Mathf.CeilToInt(maxZ - minZ) + 1;
+        Debug.Log(widthCount);
+        Debug.Log(depthCount);
+        // リスト登録
+        GameObject[,] map = new GameObject[widthCount, depthCount];
+        for (int i = 0; i < objs.Count; i++)
+        {
+
+            int x = Mathf.CeilToInt(objs[i].transform.position.x - minX);
+            int z = Mathf.CeilToInt(objs[i].transform.position.z - minZ);
+            map[x, z] = objs[i];
+
+        }
+        return map;
+
+    }
+
+    /// <summary>
+    /// エディター拡張を開いているときに継続的に起動
+    /// </summary>
+    /// <param name="sceneView"></param>
+    private void OnSceneGUI(SceneView sceneView)
+    {
+
+        OnSetObject();
+
+    }
+
+    /// <summary>
+    /// フィルモード
+    /// 穴にブロックを埋める処理
+    /// </summary>
+    private void OnFillObject()
+    {
+
+
+
+    }
 
     /// <summary>
     /// クリックモード
@@ -122,7 +323,7 @@ public class SetObject : EditorWindow
             _hasClick = !_hasClick;
 
         }
-        if(_e.type == EventType.MouseLeaveWindow)
+        if (_e.type == EventType.MouseLeaveWindow)
         {
 
             _hasClick = false;
@@ -187,103 +388,6 @@ public class SetObject : EditorWindow
                 }
             }
         }
-
-    }
-
-    /// <summary>
-    /// フィルモード
-    /// 穴にブロックを埋める処理
-    /// </summary>
-    private void OnFillObject()
-    {
-
-
-
-    }
-
-    /// <summary>
-    ///壁を均して隙間を埋める処理
-    /// </summary>
-    private void WallFix()
-    {
-
-        // ボタンを取得し押されたとき用に関数を登録
-        Button clickButton = (Button)rootVisualElement.Q<Button>("FixButton");
-        clickButton.clicked += () =>
-        {
-
-            List<GameObject> objs = new List<GameObject>();
-            foreach (var objct in Selection.objects)
-            {
-                if (!(objct is GameObject obj))
-                {
-
-                    continue;
-
-                }
-                objs.Add(obj);
-            }
-            for (int i = 0; i < objs.Count; i++)
-            {
-
-                Vector3 pos = objs[i].transform.position;
-                // 半分
-                float yPos = pos.y;
-                // 高さを0にして代入
-                pos.y = 0;
-                objs[i].transform.position = pos;
-
-                Vector3 scale = objs[i].transform.localScale;
-                // 高さを幅に変換
-                scale.y = yPos / 2 + 1;
-                objs[i].transform.localScale = scale;
-
-            }
-
-        };
-
-    }
-
-    /// <summary>
-    /// 地面の状態を変更
-    /// </summary>
-    private void GroundChange()
-    {
-
-        // ボタンを取得し押されたとき用に関数を登録
-        Button clickButton = rootVisualElement.Q<Button>("GroundChangeButton");
-        clickButton.clicked += () =>
-        {
-
-            // 地面の基本の高さ
-            Slider Height = rootVisualElement.Q<Slider>("GroundHeight");
-            // 起伏
-            Slider terrainRoughness = Height = rootVisualElement.Q<Slider>("TerrainRoughness");
-            // 斜傾（ブロック〇個分）
-            Slider slope = rootVisualElement.Q<Slider>("Slope");
-            // ブロック変更
-            Toggle isChangeBlock = rootVisualElement.Q<Toggle>("ChangeBlock");
-            // 選択中のブロックを取得
-            List<GameObject> objs = new List<GameObject>();
-            foreach (var objct in Selection.objects)
-            {
-
-                // ゲームオブジェクトのみ抜き出す
-                if (!(objct is GameObject obj))
-                {
-
-                    continue;
-
-                }
-                objs.Add(obj);
-            
-            }
-            //変更をかけそれからブロック変更
-
-
-
-        };
-
 
     }
 
