@@ -17,9 +17,9 @@
                 <ui:Button text="均す" display-tooltip-when-elided="true" name="FixButton" />
             </ui:Foldout>
             <ui:Foldout text="ステージ調整" style="color: rgb(255, 255, 255);">
-                <ui:Slider label="最大の高さ" value="0" high-value="100" name="MaxHeight" />
-                <ui:Slider label="起伏" value="0" high-value="100" name="TerrainRoughness" />
-                <ui:Slider label="斜傾" value="0" high-value="1" name="Slope" style="color: rgb(255, 255, 255); height: 25px; background-color: rgba(0, 0, 0, 0.18);" />
+                <ui:SliderInt label="最大の高さ" value="0" high-value="10" name="MaxHeight" page-size="1" show-input-field="true" />
+                <ui:Slider label="起伏" value="0" high-value="1" name="Slope" show-input-field="true" inverted="false" page-size="10" />
+                <ui:Label tabindex="-1" text="大きいほどなめらかな地形になる" display-tooltip-when-elided="true" />
                 <ui:Toggle label="ブロック変更" name="ChangeBlock" style="-unity-text-outline-color: rgba(0, 0, 0, 0); opacity: 1; background-color: rgba(0, 0, 0, 0); cursor: initial; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0);" />
                 <ui:Button text="地面変更" display-tooltip-when-elided="true" name="GroundChangeButton" />
             </ui:Foldout>

@@ -121,16 +121,17 @@ public class SetObject : EditorWindow
             {
 
                 Undo.RecordObject(objs[i].transform, "FixObj");
-                Vector3 pos = objs[i].transform.position;
+                Vector3 pos = objs[i].transform.localPosition;
                 // 半分
                 float yPos = pos.y;
                 // 高さを0にして代入
                 pos.y = 0;
-                objs[i].transform.position = pos;
+                objs[i].transform.localPosition = pos;
 
                 Vector3 scale = objs[i].transform.localScale;
                 // 高さを幅に変換
                 scale.y = yPos / 2 + 1;
+                Undo.RecordObject(objs[i].transform, "FixObj");
                 objs[i].transform.localScale = scale;
                
             }
@@ -150,16 +151,26 @@ public class SetObject : EditorWindow
         clickButton.clicked += () =>
         {
 
-            // 地面の基本の高さ
-            Slider maxHeight = rootVisualElement.Q<Slider>("MaxHeight");
-            // 起伏
-            Slider terrainRoughness = rootVisualElement.Q<Slider>("TerrainRoughness");
+            // 最大の高さ
+            SliderInt maxHeight = rootVisualElement.Q<SliderInt>("MaxHeight");
+            Debug.Log(maxHeight.value + "最大の高さ");
             // 斜傾（ブロック〇個分）
             Slider slope = rootVisualElement.Q<Slider>("Slope");
+            Debug.Log(slope.value + "斜傾");
             // ブロック変更
             Toggle isChangeBlock = rootVisualElement.Q<Toggle>("ChangeBlock");
+            Debug.Log(isChangeBlock.value + "ブロック変更");
             // マップ生成
             GameObject[,] map = CreatMap();
+            if (map == null)
+            {
+
+                return;
+
+            }
+            //同じマップにならないようにシード生成
+            float seedX = Random.value * 100f;
+            float seedZ = Random.value * 100f;
             // 高さの調整、条件次第でオブジェクトの変更をかける
             // 行
             for (int i = 0; i < map.GetLength(0); i++)
@@ -175,15 +186,22 @@ public class SetObject : EditorWindow
                         continue;
 
                     }
-                    Undo.RecordObject(map[i, j].transform, "ChangeObj");
                     // 補正した高さを戻す
-                    Vector3 pos = map[i, j].transform.position;
-                    Debug.Log(pos);
-                    Debug.Log(slope);
-                    // ノイズを使用し高さを出す
-                    int height = (int)(Mathf.PerlinNoise(pos.x + slope.value,pos.z + slope.value) * terrainRoughness.value);
-                    pos.y = height * 2;
-                    map[i, j].transform.position = pos;
+                    Vector3 pos = map[i, j].transform.localPosition;
+                    float noiseMaterialX = (pos.x + seedX) / slope.value;
+                    float noiseMaterialZ = (pos.z + seedZ) / slope.value;
+                    // ノイズを使用し高さを出す(0~1)
+                    float noise = Mathf.PerlinNoise(noiseMaterialX,noiseMaterialZ);
+                    // この値以下は平らにする
+                    float cutoff = 0.3f; 
+                    noise = noise < cutoff ? 0 : (noise - cutoff) / (1 - cutoff) * maxHeight.value;
+                    // ノイズ(0~1)に最大の高さをかけることで、高さを取得
+                    int height = (int)(noise * maxHeight.value);
+                    height = height % 2 == 0 ? height + 1 : height;
+                 
+                    pos.y = height;
+                    Undo.RecordObject(map[i, j].transform,"ChengeObj");
+                    map[i, j].transform.localPosition = pos;
 
                 }
 
@@ -262,8 +280,6 @@ public class SetObject : EditorWindow
         int widthCount = Mathf.CeilToInt(maxX - minX) + 1;
         // Z軸のブロックの個数
         int depthCount = Mathf.CeilToInt(maxZ - minZ) + 1;
-        Debug.Log(widthCount);
-        Debug.Log(depthCount);
         // リスト登録
         GameObject[,] map = new GameObject[widthCount, depthCount];
         for (int i = 0; i < objs.Count; i++)
