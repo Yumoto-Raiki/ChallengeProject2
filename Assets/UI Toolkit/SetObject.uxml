@@ -4,24 +4,24 @@
         <ui:Label tabindex="-1" text="説明　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　" display-tooltip-when-elided="true" name="Explanation" style="font-size: 20px; color: rgb(255, 255, 255); -unity-text-outline-color: rgba(118, 118, 118, 0.98); -unity-text-outline-width: 1px;" />
         <ui:Label tabindex="-1" text="このエディターは設定したオブジェクトを&#10;いろいろな方法でコピーし配置できるエディターです。" display-tooltip-when-elided="true" name="MainText" style="height: 45px; color: rgb(255, 255, 255);" />
         <uie:ObjectField label="配置するオブジェクト" name="CopyObject" style="flex-direction: row; color: rgb(255, 255, 255); height: 22px;" />
-        <ui:ScrollView style="height: 358px;">
-            <ui:Foldout text="クリック配置" value="false" style="color: rgb(255, 255, 255); height: 115px;">
+        <ui:ScrollView style="height: 692px;">
+            <ui:Foldout text="クリック配置" value="true" style="color: rgb(255, 255, 255); height: 159px;">
                 <ui:IntegerField label="配置数" value="1" name="SetCount" />
                 <ui:Button text="クリックモード" display-tooltip-when-elided="true" name="ClickModeButton" selectable="false" />
                 <ui:Label tabindex="-1" text="稼働中" display-tooltip-when-elided="true" name="ClickModeRunning" />
             </ui:Foldout>
-            <ui:Foldout text="埋める" value="false" style="color: rgb(255, 255, 255); height: 86px;">
-                <ui:Button text="フィルモード" display-tooltip-when-elided="true" name="Button" />
+            <ui:Foldout text="均し" value="true" name="Foldout" focusable="false" style="color: rgb(255, 255, 255); height: 89px; flex-direction: column; align-items: flex-start; justify-content: space-between; align-self: stretch;">
+                <ui:Button text="均す" display-tooltip-when-elided="true" name="FixButton" style="width: 593px; height: 40px;" />
             </ui:Foldout>
-            <ui:Foldout text="壁均し" value="false" name="Foldout" style="color: rgb(255, 255, 255); height: 58px;">
-                <ui:Button text="均す" display-tooltip-when-elided="true" name="FixButton" />
+            <ui:Foldout text="ステージ調整" name="Foldout" style="color: rgb(255, 255, 255);">
+                <ui:SliderInt label="最大の高さ" value="0" high-value="10" name="MaxHeight" page-size="1" show-input-field="true" low-value="1" />
+                <ui:Slider label="起伏" value="0" high-value="100" name="Slope" show-input-field="true" inverted="false" page-size="10" low-value="1" style="height: 53px;" />
+                <ui:Label tabindex="-1" text="※値が大きいほどなめらかな地形になります" display-tooltip-when-elided="true" />
+                <ui:Button text="地面変更" display-tooltip-when-elided="true" name="GroundChangeButton" style="color: rgb(255, 255, 255);" />
             </ui:Foldout>
-            <ui:Foldout text="ステージ調整" style="color: rgb(255, 255, 255);">
-                <ui:SliderInt label="最大の高さ" value="0" high-value="10" name="MaxHeight" page-size="1" show-input-field="true" />
-                <ui:Slider label="起伏" value="0" high-value="1" name="Slope" show-input-field="true" inverted="false" page-size="10" />
-                <ui:Label tabindex="-1" text="大きいほどなめらかな地形になる" display-tooltip-when-elided="true" />
-                <ui:Toggle label="ブロック変更" name="ChangeBlock" style="-unity-text-outline-color: rgba(0, 0, 0, 0); opacity: 1; background-color: rgba(0, 0, 0, 0); cursor: initial; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0);" />
-                <ui:Button text="地面変更" display-tooltip-when-elided="true" name="GroundChangeButton" />
+            <ui:Foldout text="Foldout">
+                <ui:Button text="ブロックを変更" display-tooltip-when-elided="true" name="BlockChangeButton" style="color: rgb(255, 255, 255); -unity-text-outline-color: rgba(0, 0, 0, 0);" />
+                <ui:Label tabindex="-1" text="※配置するオブジェクトに変更したいオブジェクトを配置してください" display-tooltip-when-elided="true" style="color: rgb(255, 255, 255);" />
             </ui:Foldout>
         </ui:ScrollView>
     </ui:VisualElement>
