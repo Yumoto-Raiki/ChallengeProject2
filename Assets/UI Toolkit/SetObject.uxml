@@ -7,6 +7,7 @@
         <ui:ScrollView style="height: 692px;">
             <ui:Foldout text="クリック配置" value="true" style="color: rgb(255, 255, 255); height: 159px;">
                 <ui:IntegerField label="配置数" value="1" name="SetCount" />
+                <ui:Toggle label="Toggle" name="IsUpBuildinglimitation" />
                 <ui:Button text="クリックモード" display-tooltip-when-elided="true" name="ClickModeButton" selectable="false" />
                 <ui:Label tabindex="-1" text="稼働中" display-tooltip-when-elided="true" name="ClickModeRunning" />
             </ui:Foldout>
@@ -15,11 +16,14 @@
             </ui:Foldout>
             <ui:Foldout text="ステージ調整" name="Foldout" style="color: rgb(255, 255, 255);">
                 <ui:SliderInt label="最大の高さ" value="0" high-value="10" name="MaxHeight" page-size="1" show-input-field="true" low-value="1" />
-                <ui:Slider label="起伏" value="0" high-value="100" name="Slope" show-input-field="true" inverted="false" page-size="10" low-value="1" style="height: 53px;" />
+                <ui:Slider label="起伏" value="0" high-value="300" name="Slope" show-input-field="true" inverted="false" page-size="10" low-value="1" style="height: 53px;" />
                 <ui:Label tabindex="-1" text="※値が大きいほどなめらかな地形になります" display-tooltip-when-elided="true" />
                 <ui:Button text="地面変更" display-tooltip-when-elided="true" name="GroundChangeButton" style="color: rgb(255, 255, 255);" />
             </ui:Foldout>
             <ui:Foldout text="Foldout">
+                <ui:SliderInt label="下限" value="1" high-value="10" name="MinBorder" show-input-field="true" inverted="false" low-value="1" style="background-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255);" />
+                <ui:SliderInt label="上限" value="0" high-value="10" name="MaxBorder" show-input-field="true" inverted="false" low-value="1" style="width: auto; background-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255);" />
+                <ui:Label tabindex="-1" text="ブロック変更時の上限と下限" display-tooltip-when-elided="true" style="color: rgb(255, 255, 255);" />
                 <ui:Button text="ブロックを変更" display-tooltip-when-elided="true" name="BlockChangeButton" style="color: rgb(255, 255, 255); -unity-text-outline-color: rgba(0, 0, 0, 0);" />
                 <ui:Label tabindex="-1" text="※配置するオブジェクトに変更したいオブジェクトを配置してください" display-tooltip-when-elided="true" style="color: rgb(255, 255, 255);" />
             </ui:Foldout>

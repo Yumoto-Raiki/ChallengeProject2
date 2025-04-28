@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -140,9 +141,9 @@ public class SetObject : EditorWindow
             return;
 
         }
-        Debug.Log("-------------------------------------------------------------------------------");
         // 設置個数を取得
         int setCount = rootVisualElement.Q<IntegerField>("SetCount").value;
+        bool isUpBuildinglimitation = rootVisualElement.Q<Toggle>("IsUpBuildinglimitation").value;
         // マウスカーソルの位置からRayを打つ
         Ray ray = HandleUtility.GUIPointToWorldRay(_e.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
@@ -155,7 +156,6 @@ public class SetObject : EditorWindow
                 if (obj == hit.collider.gameObject)
                 {
 
-                    Debug.Log("１つ前の生成したオブジェクトにあたる");
                     return;
 
                 }
@@ -164,6 +164,18 @@ public class SetObject : EditorWindow
             // ヒットした位置と法線を取得
             Vector3 hitPoint = hit.point;
             Vector3 normal = hit.normal;
+            // ブロックの上に配置しない設定
+            if (isUpBuildinglimitation)
+            {
+
+                if(normal == Vector3.up)
+                {
+
+                    return;
+
+                }
+
+            }
             // 生成して処理をし終わったオブジェクトを入れる
             Transform oldInstanceTrans = default;
             if (_copyObj == null)
@@ -296,7 +308,7 @@ public class SetObject : EditorWindow
         // 斜傾（ブロック〇個分）
         Slider slope = rootVisualElement.Q<Slider>("Slope");
         // マップ生成
-        GameObject[,] map = CreatMap();
+        List<List<GameObject>> map = CreatMap();
         if (map == null)
         {
 
@@ -304,25 +316,25 @@ public class SetObject : EditorWindow
 
         }
         //同じマップにならないようにシード生成
-        float seedX = Random.value * 100f;
-        float seedZ = Random.value * 100f;
+        float seedX = UnityEngine.Random.value * 100f;
+        float seedZ = UnityEngine.Random.value * 100f;
         // 高さの調整、条件次第でオブジェクトの変更をかける
         // 行
-        for (int i = 0; i < map.GetLength(0); i++)
+        for (int i = 0; i < map.Count; i++)
         {
 
             //列
-            for (int j = 0; j < map.GetLength(1); j++)
+            for (int j = 0; j < map[i].Count; j++)
             {
 
-                if (map[i, j] == null)
+                if (map[i][j] == null)
                 {
 
                     continue;
 
                 }
                 // 補正した高さを戻す
-                Vector3 pos = map[i, j].transform.localPosition;
+                Vector3 pos = map[i][j].transform.localPosition;
                 float noiseMaterialX = (pos.x + seedX) / slope.value;
                 float noiseMaterialZ = (pos.z + seedZ) / slope.value;
                 // ノイズを使用し高さを出す(0~1)
@@ -335,8 +347,8 @@ public class SetObject : EditorWindow
                 height = height % 2 == 0 ? height + 1 : height;
 
                 pos.y = height;
-                Undo.RecordObject(map[i, j].transform, "ChengeObj");
-                map[i, j].transform.localPosition = pos;
+                Undo.RecordObject(map[i][j].transform, "ChengeObj");
+                map[i][j].transform.localPosition = pos;
 
             }
 
@@ -369,7 +381,10 @@ public class SetObject : EditorWindow
     {
 
         // マップ生成
-        GameObject[,] map = CreatMap();
+        List<List<GameObject>> map = CreatMap();
+        // 最大の高さ
+        SliderInt minBorder = rootVisualElement.Q<SliderInt>("MinBorder");
+        SliderInt maxBorder = rootVisualElement.Q<SliderInt>("MaxBorder");
         if (map == null)
         {
 
@@ -378,11 +393,11 @@ public class SetObject : EditorWindow
         }
         // オブジェクト生成
         // 行
-        for (int i = 0; i < map.GetLength(0); i++)
+        for (int i = 0; i < map.Count; i++)
         {
 
             //列
-            for (int j = 0; j < map.GetLength(1); j++)
+            for (int j = 0; j < map[i].Count; j++)
             {
 
                 if(_copyObj == null)
@@ -391,17 +406,23 @@ public class SetObject : EditorWindow
                     return;
 
                 }
-                if (map[i, j] == null)
+                if (map[i][j] == null )
                 {
 
                     continue;
 
                 }
-             
+                Transform oldTrams = map[i][j].transform;
+                if(oldTrams.localScale.y < minBorder.value || oldTrams.localScale.y > maxBorder.value)
+                {
+
+                    continue;
+
+                }
                 // 生成した後にトランスフォームの情報を移す
                 GameObject instance = PrefabUtility.InstantiatePrefab(_copyObj) as GameObject;
                 Undo.RegisterCreatedObjectUndo(instance, "ChengeBlock");
-                Transform oldTrams = map[i, j].transform;
+
                 instance.transform.position = oldTrams.position;
                 instance.transform.rotation = oldTrams.rotation;
                 instance.transform.localScale = oldTrams.localScale;
@@ -412,25 +433,32 @@ public class SetObject : EditorWindow
         }
         // いらなくなったオブジェクトを削除
         // 行
-        for (int i = 0;map.GetLength(0) > 0; i++)
+        while (map.Count >= 1)
         {
 
             //列
-            while (map.GetLength(1) > 0)
+            while (map[0].Count >= 1)
             {
 
-                GameObject obj = map[i, 0];
-                map.RemoveAll(l => l.Count == 0);
+                GameObject obj = map[0][0];
+                map[0].RemoveAt(0);
                 if (obj == null)
                 {
 
                     continue;
 
                 }
-                Undo.RecordObject(map[i, 0].transform, "ChengeBlock");
-                DestroyImmediate(map[i, 0]);
+                if (obj.transform.localScale.y < minBorder.value || obj.transform.localScale.y > maxBorder.value)
+                {
+
+                    continue;
+
+                }
+                Undo.DestroyObjectImmediate(obj.transform);
+                DestroyImmediate(obj);
 
             }
+            map.RemoveAt(0);
 
         }
     }
@@ -439,7 +467,7 @@ public class SetObject : EditorWindow
     /// 地面（ステージ上のブロック）を取得しマップを生成する
     /// </summary>
     /// <returns></returns>
-    private GameObject[,] CreatMap()
+    private List<List<GameObject>> CreatMap()
     {
 
         // 選択中のブロックを取得
@@ -496,24 +524,39 @@ public class SetObject : EditorWindow
                 minZ = objs[i].transform.position.z;
 
             }
-            objs[i].transform.localScale = Vector3.one;
-            Vector3 pos = objs[i].transform.position;
-            pos.y = 0;
-            objs[i].transform.position = pos;
+
+            //Undo.RegisterCreatedObjectUndo(objs[i], "ChengeBlock");
+            //objs[i].transform.localScale = Vector3.one;
+            //Vector3 pos = objs[i].transform.position;
+            //pos.y = 0;
+            //objs[i].transform.position = pos;
 
         }
         // X軸のブロックの個数
-        int widthCount = Mathf.CeilToInt(maxX - minX) + 1;
+        int widthCount = Mathf.CeilToInt(maxX - minX);
         // Z軸のブロックの個数
-        int depthCount = Mathf.CeilToInt(maxZ - minZ) + 1;
+        int depthCount = Mathf.CeilToInt(maxZ - minZ);
         // リスト登録
-        GameObject[,] map = new GameObject[widthCount, depthCount];
+        List<List<GameObject>> map = new List<List<GameObject>>();
+        for(int i = 0; i <= widthCount; i++)
+        {
+
+            map.Add(new List<GameObject>());
+            for(int j = 0; j <= depthCount; j++)
+            {
+
+                map[i].Add(null);
+
+            }
+
+        }
         for (int i = 0; i < objs.Count; i++)
         {
 
-            int x = Mathf.CeilToInt(objs[i].transform.position.x - minX);
-            int z = Mathf.CeilToInt(objs[i].transform.position.z - minZ);
-            map[x, z] = objs[i];
+            // ブロックは２マス間隔で置いてあるので2を割る
+            int x = Mathf.CeilToInt(objs[i].transform.position.x - minX) / 2;
+            int z = Mathf.CeilToInt(objs[i].transform.position.z - minZ) / 2;
+            map[x][z] = objs[i];
 
         }
         return map;
