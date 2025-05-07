@@ -1,12 +1,13 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+
 /// <summary>
-/// ƒIƒuƒWƒFƒNƒg‚ğ”z’u‚·‚é‚½‚ß‚Ìƒc[ƒ‹
-/// “’Œ³
+/// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’é…ç½®ã™ã‚‹ãŸã‚ã®ãƒ„ãƒ¼ãƒ«
+/// æ¹¯å…ƒ
 /// 2025/4/20
 /// </summary>
 public class SetObject : EditorWindow
@@ -16,31 +17,35 @@ public class SetObject : EditorWindow
     [SerializeField] private StyleSheet _rootStyleSheet;
 
     /// <summary>
-    /// ƒNƒŠƒbƒNƒ‚[ƒh‚Å¶¬‚µ‚½ƒIƒuƒWƒFƒNƒg
+    /// ã‚¯ãƒªãƒƒã‚¯ãƒ¢ãƒ¼ãƒ‰ã§ç”Ÿæˆã—ãŸã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
     /// </summary>
-    private List<GameObject> _clickInstanceObjs = new List<GameObject>();
+    private List<GameObject> _oldInstanceObjs = new List<GameObject>();
 
     /// <summary>
-    /// ƒRƒs[‚·‚éƒIƒuƒWƒFƒNƒg
+    /// ä½¿ç”¨ã™ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
     /// </summary>
-    private GameObject _copyObj = default;
+    private GameObject _useObj = default;
+    /// <summary>
+    /// ä»•æ§˜ã™ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®è¦ªã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+    /// </summary>
+    private GameObject _useParentObj = default;
 
     /// <summary>
-    /// ƒCƒxƒ“ƒg
+    /// ã‚¤ãƒ™ãƒ³ãƒˆ
     /// </summary>
-    private static Event _e = default;
+    private static Event _event = default;
 
     /// <summary>
-    /// ƒNƒŠƒbƒN’†‚©‚Ì”»’è
+    /// ã‚¯ãƒªãƒƒã‚¯ã—ãŸã‹ã®ãƒ•ãƒ©ã‚°
     /// </summary>
     private bool _hasClick = false;
     /// <summary>
-    /// ƒNƒŠƒbƒNƒ‚[ƒh‚Ìƒtƒ‰ƒO
+    /// ã‚¯ãƒªãƒƒã‚¯ãƒ¢ãƒ¼ãƒ‰ã«ãªã£ã¦ã„ã‚‹ã‹ã®ãƒ•ãƒ©ã‚°
     /// </summary>
     private bool _isClickMode = false;
 
 
-    [MenuItem("SetObject/ƒIƒuƒWƒFƒNƒgİ’u")]
+    [MenuItem("CreateBoxMap/ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆè¨­ç½®")]
     private static void ShowWindow()
     {
         var window = GetWindow<SetObject>("UIElements");
@@ -57,10 +62,11 @@ public class SetObject : EditorWindow
         var objectField = new ObjectField("Select a GameObject")
         {
             objectType = typeof(GameObject),
-            allowSceneObjects = false // ƒV[ƒ““à‚ÌƒIƒuƒWƒFƒNƒg‚ğ•s‹–‰Â
+            allowSceneObjects = false // ã‚·ãƒ¼ãƒ³å†…ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ä¸è¨±å¯
         };
         InitialClickMode();
         SceneView.duringSceneGui += OnSceneGUI;
+        InitialSetTop();
         InitialWallFix();
         InitialGroundChange();
         InitialChangeBlock();
@@ -68,27 +74,27 @@ public class SetObject : EditorWindow
     }
 
     /// <summary>
-    /// ƒNƒŠƒbƒNƒ‚[ƒhƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚½‚Æ‚«‚Ìd‚İ
+    /// ã‚¯ãƒªãƒƒã‚¯ãƒ¢ãƒ¼ãƒ‰ãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ãŸã¨ãã®ä»•è¾¼ã¿
     /// </summary>
     private void InitialClickMode()
     {
 
-        // ƒ{ƒ^ƒ“‚ğæ“¾‚µ‰Ÿ‚³‚ê‚½‚Æ‚«—p‚ÉŠÖ”‚ğ“o˜^
+        // ãƒœã‚¿ãƒ³ã‚’å–å¾—ã—æŠ¼ã•ã‚ŒãŸã¨ãç”¨ã«é–¢æ•°ã‚’ç™»éŒ²
         Button clickButton = (Button)rootVisualElement.Q<Button>("ClickModeButton");
         clickButton.clicked += () =>
         {
 
-            GameObject oldCopyObj = _copyObj;
-            _copyObj = (GameObject)rootVisualElement.Q<ObjectField>("CopyObject").value;
-            if ((_copyObj != oldCopyObj || !_isClickMode) && _copyObj != null)
+            GameObject oldCopyObj = _useObj;
+            _useObj = (GameObject)rootVisualElement.Q<ObjectField>("UseObject").value;
+            if ((_useObj != oldCopyObj || !_isClickMode))
             {
 
-                rootVisualElement.Q<Label>("ClickModeRunning").text = "<color=green>‰Ò“®’†</color>";
+                rootVisualElement.Q<Label>("ClickModeRunning").text = "<color=green>ç¨¼å‹•ä¸­</color>";
 
                 _isClickMode = true;
                 return;
             }
-            rootVisualElement.Q<Label>("ClickModeRunning").text = "<color=red>’â~’†</color>";
+            rootVisualElement.Q<Label>("ClickModeRunning").text = "<color=red>åœæ­¢ä¸­</color>";
             _isClickMode = false;
 
         };
@@ -96,7 +102,7 @@ public class SetObject : EditorWindow
     }
 
     /// <summary>
-    /// ƒGƒfƒBƒ^[Šg’£‚ğŠJ‚¢‚Ä‚¢‚é‚Æ‚«‚ÉŒp‘±“I‚É‹N“®
+    /// ã‚¨ãƒ‡ã‚£ã‚¿ãƒ¼æ‹¡å¼µã‚’é–‹ã„ã¦ã„ã‚‹ã¨ãã«ç¶™ç¶šçš„ã«èµ·å‹•
     /// </summary>
     /// <param name="sceneView"></param>
     private void OnSceneGUI(SceneView sceneView)
@@ -107,7 +113,7 @@ public class SetObject : EditorWindow
     }
 
     /// <summary>
-    /// Click‚µ‚½‰ÓŠ‚ÉğŒ’Ê‚è‚ÉƒuƒƒbƒN‚ğ”z’u
+    /// Clickã—ãŸç®‡æ‰€ã«æ¡ä»¶é€šã‚Šã«ãƒ–ãƒ­ãƒƒã‚¯ã‚’é…ç½®
     /// </summary>
     /// <param name="isRunning"></param>
     private void ClickMode()
@@ -119,16 +125,17 @@ public class SetObject : EditorWindow
             return;
 
         }
-        // ƒCƒxƒ“ƒgæ“¾‚µ‚»‚ê‚ç‚ğğŒ‚ÉŒŸ¸
-        _e = Event.current;
-        // ¶‚Ìƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚½uŠÔ
-        if (_e.type == EventType.MouseDown && _e.button == 0)
+        // ã‚¤ãƒ™ãƒ³ãƒˆå–å¾—ã—ãã‚Œã‚‰ã‚’æ¡ä»¶ã«æ¤œæŸ»
+        _event = Event.current;
+        // ãƒã‚¦ã‚¹ã®å·¦ã®ãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ãŸç¬é–“
+        if (_event.type == EventType.MouseDown && _event.button == 0)
         {
 
             _hasClick = !_hasClick;
 
         }
-        if (_e.type == EventType.MouseLeaveWindow)
+        // Sceneç”»é¢å¤–ã«ã‚«ãƒ¼ã‚½ãƒ«ãŒå‡ºãŸã¨ã
+        if (_event.type == EventType.MouseLeaveWindow)
         {
 
             _hasClick = false;
@@ -137,20 +144,27 @@ public class SetObject : EditorWindow
         if (!_hasClick)
         {
 
-            _clickInstanceObjs.Clear();
+            _oldInstanceObjs.Clear();
             return;
 
         }
-        // İ’uŒÂ”‚ğæ“¾
-        int setCount = rootVisualElement.Q<IntegerField>("SetCount").value;
+        int setCount = rootVisualElement.Q<SliderInt>("SetCount1").value;
         bool isUpBuildinglimitation = rootVisualElement.Q<Toggle>("IsUpBuildinglimitation").value;
-        // ƒ}ƒEƒXƒJ[ƒ\ƒ‹‚ÌˆÊ’u‚©‚çRay‚ğ‘Å‚Â
-        Ray ray = HandleUtility.GUIPointToWorldRay(_e.mousePosition);
+        bool isUseParentObject = rootVisualElement.Q<Toggle>("IsUseParentObject1").value;
+        if (!IsCheckSerializeInObject(isUseParentObject))
+        {
+
+            _hasClick = false;
+            return;
+
+        }
+        // ãƒã‚¦ã‚¹ã‚«ãƒ¼ã‚½ãƒ«ã®ä½ç½®ã‹ã‚‰Rayã‚’æ‰“ã¤
+        Ray ray = HandleUtility.GUIPointToWorldRay(_event.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
 
-            // 1‚Â‘O‚É¶¬‚µ‚½ƒIƒuƒWƒFƒNƒg‚Ìˆ—’†’f
-            foreach (GameObject obj in _clickInstanceObjs)
+            // 1ã¤å‰ã«ç”Ÿæˆã—ãŸã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®å ´åˆã«å‡¦ç†ã‚’ä¸­æ–­
+            foreach (GameObject obj in _oldInstanceObjs)
             {
 
                 if (obj == hit.collider.gameObject)
@@ -161,14 +175,13 @@ public class SetObject : EditorWindow
                 }
 
             }
-            // ƒqƒbƒg‚µ‚½ˆÊ’u‚Æ–@ü‚ğæ“¾
-            Vector3 hitPoint = hit.point;
+            // æ³•ç·šã‚’å–å¾—
             Vector3 normal = hit.normal;
-            // ƒuƒƒbƒN‚Ìã‚É”z’u‚µ‚È‚¢İ’è
+            // ãƒ–ãƒ­ãƒƒã‚¯ã®ä¸Šã«é…ç½®ã—ãªã„å ´åˆ
             if (isUpBuildinglimitation)
             {
 
-                if(normal == Vector3.up)
+                if (normal == Vector3.up)
                 {
 
                     return;
@@ -176,45 +189,42 @@ public class SetObject : EditorWindow
                 }
 
             }
-            // ¶¬‚µ‚Äˆ—‚ğ‚µI‚í‚Á‚½ƒIƒuƒWƒFƒNƒg‚ğ“ü‚ê‚é
+            // ç”Ÿæˆå‡¦ç†ãŒçµ‚ã‚ã£ãŸã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å…¥ã‚Œã‚‹
             Transform oldInstanceTrans = default;
-            if (_copyObj == null)
-            {
-
-                return;
-
-            }
-            // ‰Šú‰»
-            _clickInstanceObjs.Clear();
-            // ƒIƒuƒWƒFƒNƒg‚ğƒNƒŠƒbƒN‚µ‚½ˆÊ’u‚ÉğŒ•ª¶¬
+            // åˆæœŸåŒ–
+            _oldInstanceObjs.Clear();
+            // ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ã‚¯ãƒªãƒƒã‚¯ã—ãŸä½ç½®ã«æ¡ä»¶åˆ†ç”Ÿæˆ
             for (int i = 1; i <= setCount; i++)
             {
 
-                GameObject instance = PrefabUtility.InstantiatePrefab(_copyObj) as GameObject;
+                GameObject instance = PrefabUtility.InstantiatePrefab(_useObj) as GameObject;
                 if (instance == null)
                 {
 
                     return;
 
                 }
-                Vector3 pos = hit.collider.transform.position;
+                Undo.RegisterCreatedObjectUndo(instance, "Place Prefab");
+                Vector3 pos = hit.collider.transform.localPosition;
                 Vector3 scale = hit.collider.transform.localScale;
+                // ä»Šå›ã®ãƒ«ãƒ¼ãƒ—ä¸­ã«ç”Ÿæˆã—ãŸã“ã¨ãŒã‚ã‚‹ã¨ã
                 if (oldInstanceTrans != null)
                 {
 
-                    pos = oldInstanceTrans.position;
+                    pos = oldInstanceTrans.localPosition;
                     scale = oldInstanceTrans.localScale;
 
                 }
-                // ƒm[ƒ}ƒ‰ƒCƒY•ûŒü‚ÌƒTƒCƒY‚Ì‚İc‚·
+                // æ³•ç·šæ–¹å‘ã®ã‚µã‚¤ã‚ºã®ã¿æ®‹ã™
                 scale.x *= normal.x;
                 scale.y *= normal.y;
                 scale.z *= normal.z;
-                // ƒXƒP[ƒ‹‚Ì‚Q”{“®‚¯‚Î—×‚Éİ’u‚Å‚«‚é‚½‚ß
+                // ã‚¹ã‚±ãƒ¼ãƒ«ã®ï¼’å€å‹•ã‘ã°éš£ã«è¨­ç½®ã§ãã‚‹ãŸã‚
                 pos += scale * 2;
-                instance.transform.position = pos;
-                Undo.RegisterCreatedObjectUndo(instance, "Place Prefab");
-                _clickInstanceObjs.Add(instance);
+                instance.name += "Clone";
+                instance.transform.localPosition = pos;
+                instance.transform.parent = _useParentObj == null ? null : _useParentObj.transform;
+                _oldInstanceObjs.Add(instance);
                 oldInstanceTrans = instance.transform;
 
             }
@@ -224,12 +234,179 @@ public class SetObject : EditorWindow
     }
 
     /// <summary>
-    /// ®‚¦‚éƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚½‚Æ‚«‚Ìd‚İ
+    /// ä¸Šéƒ¨ã«è¨­ç½®ãƒœã‚¿ãƒ³ã‚’ã‚’ã—ãŸæ™‚ã®ä»•è¾¼ã¿
+    /// </summary>
+    private void InitialSetTop()
+    {
+
+        Button clickButton = (Button)rootVisualElement.Q<Button>("SetTopButton");
+        clickButton.clicked += () =>
+        {
+
+            SetTop();
+
+        };
+
+    }
+
+    private void SetTop()
+    {
+
+        int setCount = rootVisualElement.Q<SliderInt>("SetCount2").value;
+        bool isUseParentObject = rootVisualElement.Q<Toggle>("IsUseParentObject2").value;
+        if (!IsCheckSerializeInObject(isUseParentObject))
+        {
+
+            return;
+
+        }
+        Debug.Log("ã“ã“ã¾ã§");
+        List<GameObject> objs = new List<GameObject>();
+        foreach (var objct in Selection.objects)
+        {
+            if (!(objct is GameObject obj))
+            {
+
+                continue;
+
+            }
+            objs.Add(obj);
+        }
+        foreach (GameObject obj in objs)
+        {
+
+            // ç”Ÿæˆå‡¦ç†ãŒçµ‚ã‚ã£ãŸã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å…¥ã‚Œã‚‹
+            Transform oldInstanceTrans = default;
+            for (int i = 0; i < setCount; i++)
+            {
+
+                GameObject instance = PrefabUtility.InstantiatePrefab(_useObj) as GameObject;
+                if (instance == null)
+                {
+
+                    return;
+
+                }
+                Undo.RegisterCreatedObjectUndo(instance, "Place Prefab");
+                // ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®è¨­ç½®ä½ç½®ã‚’å–å¾—
+                Vector3 pos = obj.transform.localPosition;
+                Vector3 scale = obj.transform.localScale;
+                if (oldInstanceTrans != null)
+                {
+
+                    pos = oldInstanceTrans.localPosition;
+                    scale = oldInstanceTrans.localScale;
+
+                }
+                pos.y += scale.y * 2;
+                instance.name += "Clone";
+                instance.transform.localPosition = pos;
+                instance.transform.parent = _useParentObj == null ? null : _useParentObj.transform;
+                oldInstanceTrans = instance.transform;
+
+            }
+
+        }
+
+    }
+
+
+
+    /// <summary>
+    /// åœ°é¢å¤‰æ›´ãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ãŸã¨ãã®ä»•è¾¼ã¿
+    /// </summary>
+    private void InitialGroundChange()
+    {
+
+        // ãƒœã‚¿ãƒ³ã‚’å–å¾—ã—æŠ¼ã•ã‚ŒãŸã¨ãç”¨ã«é–¢æ•°ã‚’ç™»éŒ²
+        Button adjustmentButton = rootVisualElement.Q<Button>("GroundAdjustmentButton");
+        adjustmentButton.clicked += () =>
+        {
+
+            GroundChange();
+            WallFix();
+
+        };
+
+
+    }
+
+    /// <summary>
+    /// åœ°é¢ã®çŠ¶æ…‹ã‚’å¤‰æ›´
+    /// </summary>
+    private void GroundChange()
+    {
+
+        // æœ€å¤§ã®é«˜ã•
+        int maxHeight = rootVisualElement.Q<SliderInt>("MaxHeight").value;
+        // æ–œå‚¾ï¼ˆãƒ–ãƒ­ãƒƒã‚¯ã€‡å€‹åˆ†ï¼‰
+        float slope = rootVisualElement.Q<Slider>("Slope").value;
+        // ãƒãƒƒãƒ—ç”Ÿæˆ
+        List<List<GameObject>> map = CreatMap();
+        if (map == null)
+        {
+
+            return;
+
+        }
+        //åŒã˜ãƒãƒƒãƒ—ã«ãªã‚‰ãªã„ã‚ˆã†ã«ã‚·ãƒ¼ãƒ‰ç”Ÿæˆ
+        float seedX = UnityEngine.Random.value * 1000f;
+        float seedZ = UnityEngine.Random.value * 1000f;
+        // é«˜ã•ã®èª¿æ•´ã€æ¡ä»¶æ¬¡ç¬¬ã§ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®å¤‰æ›´ã‚’ã‹ã‘ã‚‹
+        // è¡Œ
+        for (int i = 0; i < map.Count; i++)
+        {
+            for (int j = 0; j < map[i].Count; j++)
+            {
+                if (map[i][j] == null)
+                {
+
+                    continue;
+
+                }
+
+
+                Vector3 pos = map[i][j].transform.localPosition;
+                float x = (pos.x + seedX) / slope;
+                float z = (pos.z + seedZ) / slope;
+
+                // ç¾åœ¨ã®ä½ç½®ã®ãƒã‚¤ã‚ºå€¤
+                float noise = Mathf.PerlinNoise(x, z);
+
+                // å‹¾é…ï¼ˆéš£ã¨ã®å·®ï¼‰ã‚’è¨ˆç®—
+                float dx = Mathf.Abs(noise - Mathf.PerlinNoise(x + 0.001f, z));
+                float dz = Mathf.Abs(noise - Mathf.PerlinNoise(x, z + 0.001f));
+                float gradient = Mathf.Max(dx, dz);
+
+                // å‹¾é…ãŒæ€¥ãªå ´åˆã€å´–ã¨ã—ã¦é«˜ã•ã‚’å¼·èª¿
+                if (gradient > 0.0015f) // â†ã“ã®ã—ãã„å€¤ã¯èª¿æ•´å¯èƒ½
+                {
+                    // å´–ã£ã½ãæ€¥æ¿€ã«æŒã¡ä¸Šã’ã‚‹
+                    noise = Mathf.Lerp(noise, 1f, (gradient - 0.05f) * 10f);
+                }
+
+                // æœ€çµ‚çš„ãªé«˜ã•ã‚’æ±ºå®šï¼ˆå¶æ•°åŒ–å‡¦ç†ã¯ç¶­æŒï¼‰
+                int height = Mathf.RoundToInt(noise * maxHeight);
+                height = height % 2 == 0 ? height : height + 1;
+
+                pos.y = height;
+
+                Undo.RecordObject(map[i][j].transform, "ChangeObj");
+                map[i][j].transform.localPosition = pos;
+            }
+        }
+
+    }
+
+
+
+    /// <summary>
+    /// æ•´ãˆã‚‹ãƒœã‚¿ãƒ³ã‚’æŠ¼ã—ãŸã¨ãã®ä»•è¾¼ã¿
     /// </summary>
     private void InitialWallFix()
     {
 
-        // ƒ{ƒ^ƒ“‚ğæ“¾‚µ‰Ÿ‚³‚ê‚½‚Æ‚«—p‚ÉŠÖ”‚ğ“o˜^
+        // ãƒœã‚¿ãƒ³ã‚’å–å¾—ã—æŠ¼ã•ã‚ŒãŸã¨ãç”¨ã«é–¢æ•°ã‚’ç™»éŒ²
         Button clickButton = (Button)rootVisualElement.Q<Button>("FixButton");
         clickButton.clicked += () =>
         {
@@ -241,7 +418,7 @@ public class SetObject : EditorWindow
     }
 
     /// <summary>
-    ///•Ç‚ğ‹Ï‚µ‚ÄŒ„ŠÔ‚ğ–„‚ß‚éˆ—
+    ///å£ã‚’å‡ã—ã¦éš™é–“ã‚’åŸ‹ã‚ã‚‹å‡¦ç†
     /// </summary>
     private void WallFix()
     {
@@ -262,112 +439,36 @@ public class SetObject : EditorWindow
 
             Undo.RecordObject(objs[i].transform, "FixObj");
             Vector3 pos = objs[i].transform.localPosition;
-            // ”¼•ª
+            Vector3 scale = objs[i].transform.localScale;
+            // é«˜ã•ã‚’è¨˜æ†¶
             float yPos = pos.y;
-            // ‚‚³‚ğ0‚É‚µ‚Ä‘ã“ü
+            // é«˜ã•ã‚’0ã«ã™ã‚‹
             pos.y = 0;
             objs[i].transform.localPosition = pos;
-
-            Vector3 scale = objs[i].transform.localScale;
-            // ‚‚³‚ğ•‚É•ÏŠ·
-            scale.y = yPos / 2 + 1;
-            Undo.RecordObject(objs[i].transform, "FixObj");
+            // ç¸¦ã®é•·ã•ã‚’ï¼‘ã«ã™ã‚‹
+            scale.y = 1;
+            // é«˜ã•ã‚’å¹…ã«å¤‰æ›ã™ã‚‹ãŸã‚ï¼’ã§å‰²ã‚‹
+            scale.y += yPos / 2;
             objs[i].transform.localScale = scale;
 
         }
 
     }
 
-    /// <summary>
-    /// ’n–Ê•ÏXƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚½‚Æ‚«‚Ìd‚İ
-    /// </summary>
-    private void InitialGroundChange()
-    {
 
-        // ƒ{ƒ^ƒ“‚ğæ“¾‚µ‰Ÿ‚³‚ê‚½‚Æ‚«—p‚ÉŠÖ”‚ğ“o˜^
-        Button clickButton = rootVisualElement.Q<Button>("GroundChangeButton");
-        clickButton.clicked += () =>
-        {
-
-            GroundChange();
-            WallFix();
-
-        };
-
-
-    }
 
     /// <summary>
-    /// ’n–Ê‚Ìó‘Ô‚ğ•ÏX
-    /// </summary>
-    private void GroundChange()
-    {
-
-        // Å‘å‚Ì‚‚³
-        SliderInt maxHeight = rootVisualElement.Q<SliderInt>("MaxHeight");
-        // ÎŒXiƒuƒƒbƒNZŒÂ•ªj
-        Slider slope = rootVisualElement.Q<Slider>("Slope");
-        // ƒ}ƒbƒv¶¬
-        List<List<GameObject>> map = CreatMap();
-        if (map == null)
-        {
-
-            return;
-
-        }
-        //“¯‚¶ƒ}ƒbƒv‚É‚È‚ç‚È‚¢‚æ‚¤‚ÉƒV[ƒh¶¬
-        float seedX = UnityEngine.Random.value * 100f;
-        float seedZ = UnityEngine.Random.value * 100f;
-        // ‚‚³‚Ì’²®AğŒŸ‘æ‚ÅƒIƒuƒWƒFƒNƒg‚Ì•ÏX‚ğ‚©‚¯‚é
-        // s
-        for (int i = 0; i < map.Count; i++)
-        {
-
-            //—ñ
-            for (int j = 0; j < map[i].Count; j++)
-            {
-
-                if (map[i][j] == null)
-                {
-
-                    continue;
-
-                }
-                // •â³‚µ‚½‚‚³‚ğ–ß‚·
-                Vector3 pos = map[i][j].transform.localPosition;
-                float noiseMaterialX = (pos.x + seedX) / slope.value;
-                float noiseMaterialZ = (pos.z + seedZ) / slope.value;
-                // ƒmƒCƒY‚ğg—p‚µ‚‚³‚ğo‚·(0~1)
-                float noise = Mathf.PerlinNoise(noiseMaterialX, noiseMaterialZ);
-                // ‚±‚Ì’lˆÈ‰º‚Í•½‚ç‚É‚·‚é
-                float cutoff = 0.3f;
-                noise = noise < cutoff ? 0 : (noise - cutoff) / (1 - cutoff) * maxHeight.value;
-                // ƒmƒCƒY(0~1)‚ÉÅ‘å‚Ì‚‚³‚ğ‚©‚¯‚é‚±‚Æ‚ÅA‚‚³‚ğæ“¾
-                int height = (int)(noise * maxHeight.value);
-                height = height % 2 == 0 ? height + 1 : height;
-
-                pos.y = height;
-                Undo.RecordObject(map[i][j].transform, "ChengeObj");
-                map[i][j].transform.localPosition = pos;
-
-            }
-
-        }
-
-    }
-
-    /// <summary>
-    /// ƒuƒƒbƒN•ÏXƒ{ƒ^ƒ“‚ğ‰Ÿ‚³‚ê‚½‚Æ‚«‚Ìd‚İ
+    /// ãƒ–ãƒ­ãƒƒã‚¯å¤‰æ›´ãƒœã‚¿ãƒ³ã‚’æŠ¼ã•ã‚ŒãŸã¨ãã®ä»•è¾¼ã¿
     /// </summary>
     private void InitialChangeBlock()
     {
 
-        // ƒ{ƒ^ƒ“‚ğæ“¾‚µ‰Ÿ‚³‚ê‚½‚Æ‚«—p‚ÉŠÖ”‚ğ“o˜^
+        // ãƒœã‚¿ãƒ³ã‚’å–å¾—ã—æŠ¼ã•ã‚ŒãŸã¨ãç”¨ã«é–¢æ•°ã‚’ç™»éŒ²
         Button clickButton = (Button)rootVisualElement.Q<Button>("BlockChangeButton");
         clickButton.clicked += () =>
         {
 
-            _copyObj = (GameObject)rootVisualElement.Q<ObjectField>("CopyObject").value;
+            _useObj = (GameObject)rootVisualElement.Q<ObjectField>("UseObject").value;
             ChangeBlock();
 
         };
@@ -375,68 +476,71 @@ public class SetObject : EditorWindow
     }
 
     /// <summary>
-    /// ƒuƒƒbƒN‚ğ“ü‚ê‘Ö‚¦‚é
+    /// ãƒ–ãƒ­ãƒƒã‚¯ã‚’å…¥ã‚Œæ›¿ãˆã‚‹
     /// </summary>
     private void ChangeBlock()
     {
 
-        // ƒ}ƒbƒv¶¬
+        // ãƒãƒƒãƒ—ç”Ÿæˆ
         List<List<GameObject>> map = CreatMap();
-        // Å‘å‚Ì‚‚³
+        // æœ€å¤§ã®é«˜ã•
         SliderInt minBorder = rootVisualElement.Q<SliderInt>("MinBorder");
         SliderInt maxBorder = rootVisualElement.Q<SliderInt>("MaxBorder");
-        if (map == null)
+        bool isUseParentObject = rootVisualElement.Q<Toggle>("IsUseParentObject3").value;
+        if (map == null || !IsCheckSerializeInObject(isUseParentObject))
         {
 
             return;
 
         }
-        // ƒIƒuƒWƒFƒNƒg¶¬
-        // s
+        // ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆç”Ÿæˆ
+        // è¡Œ
         for (int i = 0; i < map.Count; i++)
         {
 
-            //—ñ
+            //åˆ—
             for (int j = 0; j < map[i].Count; j++)
             {
 
-                if(_copyObj == null)
+                if (_useObj == null)
                 {
 
                     return;
 
                 }
-                if (map[i][j] == null )
+                if (map[i][j] == null)
                 {
 
                     continue;
 
                 }
                 Transform oldTrams = map[i][j].transform;
-                if(oldTrams.localScale.y < minBorder.value || oldTrams.localScale.y > maxBorder.value)
+                if (oldTrams.localScale.y < minBorder.value || oldTrams.localScale.y > maxBorder.value)
                 {
 
                     continue;
 
                 }
-                // ¶¬‚µ‚½Œã‚Éƒgƒ‰ƒ“ƒXƒtƒH[ƒ€‚Ìî•ñ‚ğˆÚ‚·
-                GameObject instance = PrefabUtility.InstantiatePrefab(_copyObj) as GameObject;
+                // ç”Ÿæˆã—ãŸå¾Œã«ãƒˆãƒ©ãƒ³ã‚¹ãƒ•ã‚©ãƒ¼ãƒ ã®æƒ…å ±ã‚’ç§»ã™
+                GameObject instance = PrefabUtility.InstantiatePrefab(_useObj) as GameObject;
                 Undo.RegisterCreatedObjectUndo(instance, "ChengeBlock");
+
 
                 instance.transform.position = oldTrams.position;
                 instance.transform.rotation = oldTrams.rotation;
                 instance.transform.localScale = oldTrams.localScale;
-
+                instance.name += "Clone";
+                instance.transform.parent = _useParentObj == null ? null : _useParentObj.transform;
 
             }
 
         }
-        // ‚¢‚ç‚È‚­‚È‚Á‚½ƒIƒuƒWƒFƒNƒg‚ğíœ
-        // s
+        // ã„ã‚‰ãªããªã£ãŸã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’å‰Šé™¤
+        // è¡Œ
         while (map.Count >= 1)
         {
 
-            //—ñ
+            //åˆ—
             while (map[0].Count >= 1)
             {
 
@@ -463,19 +567,76 @@ public class SetObject : EditorWindow
         }
     }
 
+
+
+
     /// <summary>
-    /// ’n–ÊiƒXƒe[ƒWã‚ÌƒuƒƒbƒNj‚ğæ“¾‚µƒ}ƒbƒv‚ğ¶¬‚·‚é
+    /// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒã‚»ãƒƒãƒˆã•ã‚Œã¦ã„ã‚‹ã‹ã®ç¢ºèª
+    /// </summary>
+    /// <param name="isUseParent"></param>
+    /// <returns></returns>
+    private bool IsCheckSerializeInObject(bool isUseParent)
+    {
+
+        _useObj = (GameObject)rootVisualElement.Q<ObjectField>("UseObject").value;
+        _useParentObj = (GameObject)rootVisualElement.Q<ObjectField>("UseParentObject").value;
+        if (_useObj == null)
+        {
+
+            // è­¦å‘Šãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¡¨ç¤º
+            EditorUtility.DisplayDialog("ãŠçŸ¥ã‚‰ã›", "ä½¿ç”¨ã™ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚", "OK");
+            return false;
+
+        }
+        if (_useParentObj == null && isUseParent)
+        {
+
+            // è­¦å‘Šãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¡¨ç¤º
+            EditorUtility.DisplayDialog("ãŠçŸ¥ã‚‰ã›", "ä½¿ç”¨ã™ã‚‹ \"è¦ª\" ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚", "OK");
+            return false;
+
+        }
+        // ä½¿ç”¨ã™ã‚‹å ´åˆ_useParentObjã‚’åˆ‡ã‚Šæ›¿ãˆã‚‹
+        if (isUseParent)
+        {
+
+            _useParentObj = (GameObject)rootVisualElement.Q<ObjectField>("UseParentObject").value;
+            // è¦ªã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒãƒ—ãƒ¬ãƒãƒ–ç­‰ã ã£ãŸå ´åˆ
+            if (PrefabUtility.GetPrefabAssetType(_useParentObj) != PrefabAssetType.NotAPrefab)
+            {
+
+                // è­¦å‘Šãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¡¨ç¤º
+                EditorUtility.DisplayDialog("ãŠçŸ¥ã‚‰ã›", "ä½¿ç”¨ã™ã‚‹ \"è¦ª\" ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒ \"ãƒ’ã‚¨ãƒ©ãƒ«ã‚­ãƒ¼ä¸Šã‹ã‚‰\" è¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚\nãƒ—ãƒ¬ãƒãƒ–ç­‰ã‹ã‚‰ã®è¨­å®šã¯ã§ãã¾ã›ã‚“ã€‚ã”ç¢ºèªã—ã¦ãã ã•ã„", "OK");
+
+                return false;
+
+            }
+
+        }
+        else
+        {
+
+            _useParentObj = null;
+
+        }
+
+        return true;
+
+    }
+
+    /// <summary>
+    /// åœ°é¢ï¼ˆã‚¹ãƒ†ãƒ¼ã‚¸ä¸Šã®ãƒ–ãƒ­ãƒƒã‚¯ï¼‰ã‚’å–å¾—ã—ãƒãƒƒãƒ—ã‚’ç”Ÿæˆã™ã‚‹
     /// </summary>
     /// <returns></returns>
     private List<List<GameObject>> CreatMap()
     {
 
-        // ‘I‘ğ’†‚ÌƒuƒƒbƒN‚ğæ“¾
+        // é¸æŠä¸­ã®ãƒ–ãƒ­ãƒƒã‚¯ã‚’å–å¾—
         List<GameObject> objs = new List<GameObject>();
         foreach (var objct in Selection.objects)
         {
 
-            // ƒQ[ƒ€ƒIƒuƒWƒFƒNƒg‚Ì‚İ”²‚«o‚·
+            // ã‚²ãƒ¼ãƒ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ã¿æŠœãå‡ºã™
             if (!(objct is GameObject obj))
             {
 
@@ -491,12 +652,12 @@ public class SetObject : EditorWindow
             return null;
 
         }
-        // ‚Ü‚¸Å‘å‚ÆÅ¬ƒTƒCƒY‚ğŒ©Ï‚à‚éi•E‰œs‚«j
+        // ã¾ãšæœ€å¤§ã¨æœ€å°ã‚µã‚¤ã‚ºã‚’è¦‹ç©ã‚‚ã‚‹ï¼ˆå¹…ãƒ»å¥¥è¡Œãï¼‰
         float maxX = float.MinValue;
         float maxZ = float.MinValue;
         float minX = float.MaxValue;
         float minZ = float.MaxValue;
-        // ’n–Ê‚ğ•½‚ç‚É‚µ‚È‚ª‚çƒTƒCƒY‚ğŒ©Ï‚à‚é
+        // åœ°é¢ã®ã‚µã‚¤ã‚ºã‚’è¦‹ç©ã‚‚ã‚‹
         for (int i = 0; i < objs.Count; i++)
         {
 
@@ -525,24 +686,18 @@ public class SetObject : EditorWindow
 
             }
 
-            //Undo.RegisterCreatedObjectUndo(objs[i], "ChengeBlock");
-            //objs[i].transform.localScale = Vector3.one;
-            //Vector3 pos = objs[i].transform.position;
-            //pos.y = 0;
-            //objs[i].transform.position = pos;
-
         }
-        // X²‚ÌƒuƒƒbƒN‚ÌŒÂ”
+        // Xè»¸ã®ãƒ–ãƒ­ãƒƒã‚¯ã®å€‹æ•°
         int widthCount = Mathf.CeilToInt(maxX - minX);
-        // Z²‚ÌƒuƒƒbƒN‚ÌŒÂ”
+        // Zè»¸ã®ãƒ–ãƒ­ãƒƒã‚¯ã®å€‹æ•°
         int depthCount = Mathf.CeilToInt(maxZ - minZ);
-        // ƒŠƒXƒg“o˜^
+        // ãƒªã‚¹ãƒˆç™»éŒ²
         List<List<GameObject>> map = new List<List<GameObject>>();
-        for(int i = 0; i <= widthCount; i++)
+        for (int i = 0; i <= widthCount; i++)
         {
 
             map.Add(new List<GameObject>());
-            for(int j = 0; j <= depthCount; j++)
+            for (int j = 0; j <= depthCount; j++)
             {
 
                 map[i].Add(null);
@@ -553,7 +708,7 @@ public class SetObject : EditorWindow
         for (int i = 0; i < objs.Count; i++)
         {
 
-            // ƒuƒƒbƒN‚Í‚Qƒ}ƒXŠÔŠu‚Å’u‚¢‚Ä‚ ‚é‚Ì‚Å2‚ğŠ„‚é
+            // ãƒ–ãƒ­ãƒƒã‚¯ã¯ï¼’ãƒã‚¹é–“éš”ã§ç½®ã„ã¦ã‚ã‚‹ã®ã§2ã‚’å‰²ã‚‹
             int x = Mathf.CeilToInt(objs[i].transform.position.x - minX) / 2;
             int z = Mathf.CeilToInt(objs[i].transform.position.z - minZ) / 2;
             map[x][z] = objs[i];

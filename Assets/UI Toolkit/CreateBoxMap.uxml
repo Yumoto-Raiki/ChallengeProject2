@@ -1,0 +1,39 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/UI%20Toolkit/Uss/Uss.uss?fileID=7433441132597879392&amp;guid=a0455ffa90b1cbd4fad18071d937a502&amp;type=3#Uss" />
+    <ui:Label tabindex="-1" text="説明　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　" display-tooltip-when-elided="true" name="Explanation" style="font-size: 20px; color: rgb(255, 255, 255); -unity-text-outline-color: rgba(118, 118, 118, 0.98); -unity-text-outline-width: 1px;" />
+    <ui:Label tabindex="-1" text="このエディターは設定したオブジェクトを&#10;いろいろな方法でコピーし配置できるエディターです。" display-tooltip-when-elided="true" name="MainText" style="height: 45px; color: rgb(255, 255, 255);" />
+    <uie:ObjectField label="使用するオブジェクト" name="UseObject" allow-scene-objects="true" style="flex-direction: row; color: rgb(255, 255, 255); height: 31px; align-self: stretch; align-items: stretch; justify-content: space-between; width: 415px;" />
+    <uie:ObjectField label="使用する親オブジェクト" name="UseParentObject" allow-scene-objects="true" focusable="true" style="flex-direction: row; color: rgb(255, 255, 255); height: 31px; align-self: auto; align-items: stretch; justify-content: space-between; width: 415px;" />
+    <ui:Label tabindex="-1" text="※使用する場合のみ設定" display-tooltip-when-elided="true" style="color: rgb(255, 255, 255);" />
+    <ui:GroupBox>
+        <ui:Foldout text="クリック配置" name="Foldout" value="false" style="color: rgb(255, 255, 255); flex-direction: column; position: relative; top: auto; left: auto; align-items: flex-start; align-self: stretch; background-color: rgba(255, 255, 255, 0); padding-bottom: 20px;">
+            <ui:SliderInt label="配置数" value="1" high-value="10" name="SetCount1" inverted="true" show-input-field="true" low-value="1" style="width: 409px;" />
+            <ui:Toggle label="ブロック上への配置制限" name="IsUpBuildinglimitation" value="true" />
+            <ui:Toggle label="親オブジェクトを設定する" name="IsUseParentObject1" value="true" />
+            <ui:Button text="クリックモード" display-tooltip-when-elided="true" name="ClickModeButton" selectable="false" select-line-by-triple-click="false" />
+            <ui:Label tabindex="-1" text="稼働中" display-tooltip-when-elided="true" name="ClickModeRunning" />
+        </ui:Foldout>
+        <ui:Foldout text="上部設置" name="Foldout" value="false" style="color: rgb(255, 255, 255); flex-direction: column; position: relative; top: auto; left: auto; align-items: flex-start; align-self: stretch; background-color: rgba(255, 255, 255, 0); padding-bottom: 20px;">
+            <ui:SliderInt label="配置数" value="1" high-value="10" name="SetCount2" inverted="false" show-input-field="true" low-value="1" style="width: 410px;" />
+            <ui:Toggle label="親オブジェクトを設定する" name="IsUseParentObject2" value="true" />
+            <ui:Button text="上部に設置" display-tooltip-when-elided="true" name="SetTopButton" selectable="false" select-line-by-triple-click="false" />
+        </ui:Foldout>
+        <ui:Foldout text="ステージ調整" name="Foldout" value="true" style="color: rgb(255, 255, 255); flex-direction: column; position: relative; top: auto; left: auto; align-items: flex-start; align-self: stretch; padding-bottom: 20px;">
+            <ui:SliderInt label="最大の高さ" value="0" high-value="10" name="MaxHeight" page-size="1" show-input-field="true" low-value="1" style="width: 411px;" />
+            <ui:Slider label="起伏" value="1" high-value="300" name="Slope" show-input-field="true" inverted="false" page-size="10" low-value="1" style="height: auto; width: auto;" />
+            <ui:Label tabindex="-1" text="※値が大きいほどなめらかな地形になります" display-tooltip-when-elided="true" />
+            <ui:Button text="地面調整" display-tooltip-when-elided="true" name="GroundAdjustmentButton" style="color: rgb(255, 255, 255);" />
+        </ui:Foldout>
+        <ui:Foldout text="均し" value="true" name="Foldout" focusable="false" style="color: rgb(255, 255, 255); height: auto; flex-direction: column; align-items: flex-start; justify-content: flex-start; align-self: stretch; position: relative; top: auto; left: auto; width: auto; padding-bottom: 20px;">
+            <ui:Button text="均す" display-tooltip-when-elided="true" name="FixButton" style="width: 413px; height: auto;" />
+        </ui:Foldout>
+        <ui:Foldout text="ブロック置換" name="Foldout" value="true" style="flex-direction: column; color: rgb(255, 255, 255); align-items: flex-start; justify-content: flex-start; position: relative; top: auto; left: auto; align-self: stretch; width: auto; padding-bottom: 20px;">
+            <ui:SliderInt label="上限" value="0" high-value="10" name="MaxBorder" show-input-field="true" inverted="false" low-value="1" style="width: 401px; background-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255);" />
+            <ui:SliderInt label="下限" value="1" high-value="10" name="MinBorder" show-input-field="true" inverted="false" low-value="1" style="background-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255); width: 400px;" />
+            <ui:Label tabindex="-1" text="ブロック変更時の上限と下限" display-tooltip-when-elided="true" name="Label" style="color: rgb(255, 255, 255);" />
+            <ui:Toggle label="親オブジェクトを設定する" name="IsUseParentObject3" value="true" />
+            <ui:Button text="ブロックを変更" display-tooltip-when-elided="true" name="BlockChangeButton" style="color: rgb(255, 255, 255); -unity-text-outline-color: rgba(0, 0, 0, 0); width: 417px;" />
+            <ui:Label tabindex="-1" text="※配置するオブジェクトに変更したいオブジェクトを配置してください" display-tooltip-when-elided="true" style="color: rgb(255, 255, 255);" />
+        </ui:Foldout>
+    </ui:GroupBox>
+</ui:UXML>
