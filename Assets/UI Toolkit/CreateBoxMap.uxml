@@ -32,7 +32,7 @@
             <ui:SliderInt label="下限" value="1" high-value="10" name="MinBorder" show-input-field="true" inverted="false" low-value="1" style="background-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255); width: 400px;" />
             <ui:Label tabindex="-1" text="ブロック変更時の上限と下限" display-tooltip-when-elided="true" name="Label" style="color: rgb(255, 255, 255);" />
             <ui:Toggle label="親オブジェクトを設定する" name="IsUseParentObject3" value="true" />
-            <ui:Toggle label="一番高いブロックを基準にそろえる" name="IsUseParentObject3" value="true" />
+            <ui:Toggle label="一番高いブロックを基準にそろえる" name="IsFixMaxHeight" value="true" />
             <ui:Button text="ブロックを変更" display-tooltip-when-elided="true" name="BlockChangeButton" style="color: rgb(255, 255, 255); -unity-text-outline-color: rgba(0, 0, 0, 0); width: 417px;" />
             <ui:Label tabindex="-1" text="※配置するオブジェクトに変更したいオブジェクトを配置してください" display-tooltip-when-elided="true" style="color: rgb(255, 255, 255);" />
         </ui:Foldout>
