@@ -487,10 +487,53 @@ public class SetObject : EditorWindow
         SliderInt minBorder = rootVisualElement.Q<SliderInt>("MinBorder");
         SliderInt maxBorder = rootVisualElement.Q<SliderInt>("MaxBorder");
         bool isUseParentObject = rootVisualElement.Q<Toggle>("IsUseParentObject3").value;
+        bool isFixMaxHeight = rootVisualElement.Q<Toggle>("IsFixMaxHeight").value;
         if (map == null || !IsCheckSerializeInObject(isUseParentObject))
         {
 
             return;
+
+        }
+        float maxHeight = float.MinValue;
+        // 最大の高さを見つける
+        if (isFixMaxHeight)
+        {
+
+            // 行
+            for (int i = 0; i < map.Count; i++)
+            {
+
+                //列
+                for (int j = 0; j < map[i].Count; j++)
+                {
+
+                    if (_useObj == null)
+                    {
+
+                        return;
+
+                    }
+                    if (map[i][j] == null)
+                    {
+
+                        continue;
+
+                    }
+                    float height = map[i][j].transform.localPosition.y;
+                    Debug.Log(height);
+                    height -=  map[i][j].transform.localScale.y;
+                    Debug.Log(height);
+
+                    if (maxHeight < height)
+                    {
+
+                        maxHeight = height;
+
+                    }
+
+                }
+
+            }
 
         }
         // オブジェクト生成
@@ -529,6 +572,14 @@ public class SetObject : EditorWindow
                 instance.transform.position = oldTrams.position;
                 instance.transform.rotation = oldTrams.rotation;
                 instance.transform.localScale = oldTrams.localScale;
+                if (isFixMaxHeight)
+                {
+
+                    Vector3 scale = instance.transform.localScale;
+                    scale.y += maxHeight;
+                    instance.transform.localScale = scale;
+
+                }
                 instance.name += "Clone";
                 instance.transform.parent = _useParentObj == null ? null : _useParentObj.transform;
 
