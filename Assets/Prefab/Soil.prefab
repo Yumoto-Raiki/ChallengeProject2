@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: beb3967ea19f99748a99d12bf107f320, type: 3}
       propertyPath: m_Name
-      value: Soli
+      value: Soil
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: beb3967ea19f99748a99d12bf107f320, type: 3}
       propertyPath: m_Layer
@@ -62,14 +62,14 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: beb3967ea19f99748a99d12bf107f320, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -3664227984075625685}
+      addedObject: {fileID: 2365825451885735812}
   m_SourcePrefab: {fileID: 100100000, guid: beb3967ea19f99748a99d12bf107f320, type: 3}
 --- !u!1 &1329340777623766426 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: beb3967ea19f99748a99d12bf107f320, type: 3}
   m_PrefabInstance: {fileID: 2212302834999359691}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &-3664227984075625685
+--- !u!65 &2365825451885735812
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -88,5 +88,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2, y: 2, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0.5, z: 0}

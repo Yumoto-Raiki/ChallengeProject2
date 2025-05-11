@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b1a9cfa1008f62f439743075f02df36d, type: 3}
       propertyPath: m_Name
-      value: Wall
+      value: Concrete
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b1a9cfa1008f62f439743075f02df36d, type: 3}
       propertyPath: m_Layer
@@ -62,14 +62,14 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b1a9cfa1008f62f439743075f02df36d, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8377793776110080719}
+      addedObject: {fileID: 969280843783609261}
   m_SourcePrefab: {fileID: 100100000, guid: b1a9cfa1008f62f439743075f02df36d, type: 3}
 --- !u!1 &1876604385515357146 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: b1a9cfa1008f62f439743075f02df36d, type: 3}
   m_PrefabInstance: {fileID: 1642231044299587211}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &8377793776110080719
+--- !u!65 &969280843783609261
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -88,5 +88,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2, y: 2, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0.5, z: 0}

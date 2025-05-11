@@ -17,7 +17,11 @@ public class SetObject : EditorWindow
     [SerializeField] private StyleSheet _rootStyleSheet;
 
     /// <summary>
-    /// クリックモードで生成したオブジェクト
+    /// クリックし終わったオブジェクト
+    /// </summary>
+    private GameObject _oldClickObj = default;
+    /// <summary>
+    /// クリックモードで生成し終わったオブジェクト
     /// </summary>
     private List<GameObject> _oldInstanceObjs = new List<GameObject>();
 
@@ -26,7 +30,7 @@ public class SetObject : EditorWindow
     /// </summary>
     private GameObject _useObj = default;
     /// <summary>
-    /// 仕様するオブジェクトの親オブジェクト
+    /// 使用するオブジェクトの親オブジェクト
     /// </summary>
     private GameObject _useParentObj = default;
 
@@ -43,6 +47,9 @@ public class SetObject : EditorWindow
     /// クリックモードになっているかのフラグ
     /// </summary>
     private bool _isClickMode = false;
+
+    // セーブの間隔
+   private int _saveCount = 5;
 
 
     [MenuItem("CreateBoxMap/オブジェクト設置")]
@@ -67,7 +74,8 @@ public class SetObject : EditorWindow
         InitialClickMode();
         SceneView.duringSceneGui += OnSceneGUI;
         InitialSetTop();
-        InitialWallFix();
+        InitialSnap();
+        InitialFixTop();
         InitialGroundChange();
         InitialChangeBlock();
 
@@ -144,10 +152,13 @@ public class SetObject : EditorWindow
         if (!_hasClick)
         {
 
+            _oldClickObj = null;
             _oldInstanceObjs.Clear();
             return;
 
         }
+
+
         int setCount = rootVisualElement.Q<SliderInt>("SetCount1").value;
         bool isUpBuildinglimitation = rootVisualElement.Q<Toggle>("IsUpBuildinglimitation").value;
         bool isUseParentObject = rootVisualElement.Q<Toggle>("IsUseParentObject1").value;
@@ -163,6 +174,12 @@ public class SetObject : EditorWindow
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
 
+            if (_oldClickObj == hit.collider.gameObject)
+            {
+
+                return;
+
+            }
             // 1つ前に生成したオブジェクトの場合に処理を中断
             foreach (GameObject obj in _oldInstanceObjs)
             {
@@ -189,14 +206,18 @@ public class SetObject : EditorWindow
                 }
 
             }
+            Debug.Log("更新");
+            _oldInstanceObjs.Clear();
+            _oldClickObj = hit.collider.gameObject;
             // 生成処理が終わったオブジェクトを入れる
             Transform oldInstanceTrans = default;
-            // 初期化
-            _oldInstanceObjs.Clear();
+            // グループID取得
+            int group = Undo.GetCurrentGroup();
             // オブジェクトをクリックした位置に条件分生成
             for (int i = 1; i <= setCount; i++)
             {
 
+               
                 GameObject instance = PrefabUtility.InstantiatePrefab(_useObj) as GameObject;
                 if (instance == null)
                 {
@@ -204,7 +225,24 @@ public class SetObject : EditorWindow
                     return;
 
                 }
+                _saveCount--;
                 Undo.RegisterCreatedObjectUndo(instance, "Place Prefab");
+                // 5回ごとに Undo グループを開始
+                if (_saveCount == 0 )
+                {
+
+                    Debug.Log("セーブ");
+                    _saveCount = 5;
+                    // 名前付けをここで行う
+                    Undo.SetCurrentGroupName($"Place Prefab Group {(i - 1) / 5 + 1}");
+                    // まとめる
+                    Undo.CollapseUndoOperations(group);
+                    // 次のグループへ
+                    Undo.IncrementCurrentGroup();
+                    // 新しいグループIDを取得
+                    group = Undo.GetCurrentGroup();
+
+                }
                 Vector3 pos = hit.collider.transform.localPosition;
                 Vector3 scale = hit.collider.transform.localScale;
                 // 今回のループ中に生成したことがあるとき
@@ -220,7 +258,7 @@ public class SetObject : EditorWindow
                 scale.y *= normal.y;
                 scale.z *= normal.z;
                 // スケールの２倍動けば隣に設置できるため
-                pos += scale * 2;
+                pos += scale;
                 instance.name += "Clone";
                 instance.transform.localPosition = pos;
                 instance.transform.parent = _useParentObj == null ? null : _useParentObj.transform;
@@ -233,8 +271,10 @@ public class SetObject : EditorWindow
 
     }
 
+
+
     /// <summary>
-    /// 上部に設置ボタンををした時の仕込み
+    /// 上部に実行ボタンををした時の仕込み
     /// </summary>
     private void InitialSetTop()
     {
@@ -254,59 +294,120 @@ public class SetObject : EditorWindow
 
         int setCount = rootVisualElement.Q<SliderInt>("SetCount2").value;
         bool isUseParentObject = rootVisualElement.Q<Toggle>("IsUseParentObject2").value;
-        if (!IsCheckSerializeInObject(isUseParentObject))
+        bool isRemoval = rootVisualElement.Q<Toggle>("IsRemoval").value;
+
+        // 設置
+        if (!isRemoval)
         {
 
-            return;
-
-        }
-        Debug.Log("ここまで");
-        List<GameObject> objs = new List<GameObject>();
-        foreach (var objct in Selection.objects)
-        {
-            if (!(objct is GameObject obj))
+            if (!IsCheckSerializeInObject(isUseParentObject))
             {
 
-                continue;
+                return;
 
             }
-            objs.Add(obj);
-        }
-        foreach (GameObject obj in objs)
-        {
+            List<GameObject> objs = new List<GameObject>();
+            foreach (var objct in Selection.objects)
+            {
+                if (!(objct is GameObject obj))
+                {
 
-            // 生成処理が終わったオブジェクトを入れる
-            Transform oldInstanceTrans = default;
-            for (int i = 0; i < setCount; i++)
+                    continue;
+
+                }
+                objs.Add(obj);
+            }
+            foreach (GameObject obj in objs)
             {
 
-                GameObject instance = PrefabUtility.InstantiatePrefab(_useObj) as GameObject;
-                if (instance == null)
+                // 生成処理が終わったオブジェクトを入れる
+                Transform oldInstanceTrans = default;
+                for (int i = 0; i < setCount; i++)
                 {
 
-                    return;
+                    GameObject instance = PrefabUtility.InstantiatePrefab(_useObj) as GameObject;
+                    if (instance == null)
+                    {
 
+                        return;
+
+                    }
+                    Undo.RegisterCreatedObjectUndo(instance, "Place Prefab");
+                    // オブジェクトの設置位置を取得
+                    Vector3 pos = obj.transform.localPosition;
+                    Vector3 scale = obj.transform.localScale;
+                    if (oldInstanceTrans != null)
+                    {
+
+                        pos = oldInstanceTrans.localPosition;
+                        scale = oldInstanceTrans.localScale;
+
+                    }
+                    pos.y += scale.y;
+                    instance.name += "Clone";
+                    instance.transform.localPosition = pos;
+                    instance.transform.parent = _useParentObj == null ? null : _useParentObj.transform;
+                    oldInstanceTrans = instance.transform;
                 }
-                Undo.RegisterCreatedObjectUndo(instance, "Place Prefab");
-                // オブジェクトの設置位置を取得
-                Vector3 pos = obj.transform.localPosition;
-                Vector3 scale = obj.transform.localScale;
-                if (oldInstanceTrans != null)
+
+            }
+
+
+        }
+        // 撤去
+        else
+        {
+
+            List<GameObject> objs = new List<GameObject>();
+            foreach (var objct in Selection.objects)
+            {
+                if (!(objct is GameObject obj))
                 {
 
-                    pos = oldInstanceTrans.localPosition;
-                    scale = oldInstanceTrans.localScale;
+                    continue;
 
                 }
-                pos.y += scale.y * 2;
-                instance.name += "Clone";
-                instance.transform.localPosition = pos;
-                instance.transform.parent = _useParentObj == null ? null : _useParentObj.transform;
-                oldInstanceTrans = instance.transform;
+                objs.Add(obj);
+            }
+            foreach (GameObject obj in objs)
+            {
+
+                if (obj == null)
+                {
+
+                    continue;
+
+                }
+                for (int i = 0; i < setCount; i++)
+                {
+
+                    Vector3 pos = obj.transform.localPosition;
+                    Vector3 scale = obj.transform.localScale;
+
+                    Ray ray = new Ray(pos + Vector3.up * scale.y, Vector3.up);
+                    RaycastHit hit = default;
+                    if (!Physics.Raycast(ray, out hit))
+                    {
+
+                        if (obj == hit.collider)
+                        {
+
+                            Debug.LogError("自ブロックに触れた");
+                            continue;
+
+                        }
+                        break;
+
+                    }
+                    Debug.Log("撤去中");
+                    Undo.DestroyObjectImmediate(hit.collider.gameObject);
+
+                }
 
             }
 
         }
+
 
     }
 
@@ -324,7 +425,7 @@ public class SetObject : EditorWindow
         {
 
             GroundChange();
-            WallFix();
+            SnapFix();
 
         };
 
@@ -339,7 +440,9 @@ public class SetObject : EditorWindow
 
         // 最大の高さ
         int maxHeight = rootVisualElement.Q<SliderInt>("MaxHeight").value;
-        // 斜傾（ブロック〇個分）
+        // 最小の高さ
+        int minHeight = rootVisualElement.Q<SliderInt>("MinHeight").value;
+        // 滑らかさ
         float slope = rootVisualElement.Q<Slider>("Slope").value;
         // マップ生成
         List<List<GameObject>> map = CreatMap();
@@ -356,44 +459,40 @@ public class SetObject : EditorWindow
         // 行
         for (int i = 0; i < map.Count; i++)
         {
+
             for (int j = 0; j < map[i].Count; j++)
             {
+
                 if (map[i][j] == null)
                 {
 
                     continue;
 
                 }
-
-
                 Vector3 pos = map[i][j].transform.localPosition;
                 float x = (pos.x + seedX) / slope;
                 float z = (pos.z + seedZ) / slope;
-
                 // 現在の位置のノイズ値
                 float noise = Mathf.PerlinNoise(x, z);
-
-                // 勾配（隣との差）を計算
-                float dx = Mathf.Abs(noise - Mathf.PerlinNoise(x + 0.001f, z));
-                float dz = Mathf.Abs(noise - Mathf.PerlinNoise(x, z + 0.001f));
-                float gradient = Mathf.Max(dx, dz);
-
-                // 勾配が急な場合、崖として高さを強調
-                if (gradient > 0.0015f) // ←このしきい値は調整可能
-                {
-                    // 崖っぽく急激に持ち上げる
-                    noise = Mathf.Lerp(noise, 1f, (gradient - 0.05f) * 10f);
-                }
-
-                // 最終的な高さを決定（偶数化処理は維持）
+                noise *= 1.1f;
+                noise = Math.Clamp(noise, 0, 1);
+                // 最終的な高さを決定
                 int height = Mathf.RoundToInt(noise * maxHeight);
-                height = height % 2 == 0 ? height : height + 1;
+                if (height < minHeight)
+                {
 
+                    height /= 2;
+                    height += minHeight;
+
+                }
+                // サイズの高さの分１をひいておく
+                height -= 1;
                 pos.y = height;
-
                 Undo.RecordObject(map[i][j].transform, "ChangeObj");
                 map[i][j].transform.localPosition = pos;
+
             }
+
         }
 
     }
@@ -401,17 +500,17 @@ public class SetObject : EditorWindow
 
 
     /// <summary>
-    /// 整えるボタンを押したときの仕込み
+    /// 地面に底面を付けるボタンを押したときの仕込み
     /// </summary>
-    private void InitialWallFix()
+    private void InitialSnap()
     {
 
         // ボタンを取得し押されたとき用に関数を登録
-        Button clickButton = (Button)rootVisualElement.Q<Button>("FixButton");
+        Button clickButton = (Button)rootVisualElement.Q<Button>("SnapButton");
         clickButton.clicked += () =>
         {
 
-            WallFix();
+            SnapFix();
 
         };
 
@@ -420,7 +519,7 @@ public class SetObject : EditorWindow
     /// <summary>
     ///壁を均して隙間を埋める処理
     /// </summary>
-    private void WallFix()
+    private void SnapFix()
     {
 
         List<GameObject> objs = new List<GameObject>();
@@ -447,14 +546,112 @@ public class SetObject : EditorWindow
             objs[i].transform.localPosition = pos;
             // 縦の長さを１にする
             scale.y = 1;
-            // 高さを幅に変換するため２で割る
-            scale.y += yPos / 2;
+            scale.y += yPos;
             objs[i].transform.localScale = scale;
 
         }
 
     }
 
+
+
+    /// <summary>
+    /// 上にそろえるボタンを押したときの仕込み
+    /// </summary>
+    private void InitialFixTop()
+    {
+
+        // ボタンを取得し押されたとき用に関数を登録
+        Button clickButton = (Button)rootVisualElement.Q<Button>("FixTopButton");
+        clickButton.clicked += () =>
+        {
+
+            Debug.Log("押した");
+            FixTop();
+
+        };
+
+    }
+
+    /// <summary>
+    /// 一番高いブロックにそろえる
+    /// </summary>
+    private void FixTop()
+    {
+
+        // マップ生成
+        List<List<GameObject>> map = CreatMap();
+        if (map == null)
+        {
+
+            return;
+
+        }
+        float maxHeight = float.MinValue;
+        // 最大の高さを見つける
+        // 行
+        for (int i = 0; i < map.Count; i++)
+        {
+
+            //列
+            for (int j = 0; j < map[i].Count; j++)
+            {
+
+                if (map[i][j] == null)
+                {
+
+                    continue;
+
+                }
+                float height = map[i][j].transform.localPosition.y;
+                // ブロックの通常時のサイズが１，１，１で、
+                // 原点がブロックの下にあるため、高さを図るときに
+                // ブロック1サイズ分が余剰にカウントされているため-１をする。
+                height += (map[i][j].transform.localScale.y - 1);
+                if (maxHeight < height)
+                {
+
+                    maxHeight = height;
+
+                }
+
+            }
+
+        }
+
+        // オブジェクト生成
+        // 行
+        for (int i = 0; i < map.Count; i++)
+        {
+
+            //列
+            for (int j = 0; j < map[i].Count; j++)
+            {
+
+                if (map[i][j] == null)
+                {
+
+                    continue;
+
+                }
+                Undo.RecordObject(map[i][j], "TopFixBlock");
+
+                float height = map[i][j].transform.position.y;
+                // ブロックの通常時のサイズが１，１，１で、
+                // 原点がブロックの下にあるため、高さを図るときに
+                // ブロック1サイズ分が余剰にカウントされているため-１をする。
+                height += (map[i][j].transform.localScale.y - 1);
+                float addHeight = maxHeight - height;
+
+                Vector3 scale = map[i][j].transform.localScale;
+                scale.y += addHeight;
+                map[i][j].transform.localScale = scale;
+
+            }
+
+        }
+
+    }
 
 
     /// <summary>
@@ -487,6 +684,7 @@ public class SetObject : EditorWindow
         SliderInt minBorder = rootVisualElement.Q<SliderInt>("MinBorder");
         SliderInt maxBorder = rootVisualElement.Q<SliderInt>("MaxBorder");
         bool isUseParentObject = rootVisualElement.Q<Toggle>("IsUseParentObject3").value;
+        // 変換するブロックの中で一番高い位置に合わせるかのフラグ
         bool isFixMaxHeight = rootVisualElement.Q<Toggle>("IsFixMaxHeight").value;
         if (map == null || !IsCheckSerializeInObject(isUseParentObject))
         {
@@ -520,10 +718,10 @@ public class SetObject : EditorWindow
 
                     }
                     float height = map[i][j].transform.localPosition.y;
-                    Debug.Log(height);
-                    height -=  map[i][j].transform.localScale.y;
-                    Debug.Log(height);
-
+                    // ブロックの通常時のサイズが１，１，１で、
+                    // 原点がブロックの下にあるため、高さを図るときに
+                    // ブロック1サイズ分が余剰にカウントされているため-１をする。
+                    height += (map[i][j].transform.localScale.y - 1);
                     if (maxHeight < height)
                     {
 
@@ -545,6 +743,7 @@ public class SetObject : EditorWindow
             for (int j = 0; j < map[i].Count; j++)
             {
 
+
                 if (_useObj == null)
                 {
 
@@ -558,7 +757,7 @@ public class SetObject : EditorWindow
 
                 }
                 Transform oldTrams = map[i][j].transform;
-                if (oldTrams.localScale.y < minBorder.value || oldTrams.localScale.y > maxBorder.value)
+                if (oldTrams.localScale.y + oldTrams.position.y < minBorder.value || oldTrams.localScale.y + oldTrams.position.y > maxBorder.value)
                 {
 
                     continue;
@@ -572,11 +771,19 @@ public class SetObject : EditorWindow
                 instance.transform.position = oldTrams.position;
                 instance.transform.rotation = oldTrams.rotation;
                 instance.transform.localScale = oldTrams.localScale;
+                // 一番高い位置にそろえる
                 if (isFixMaxHeight)
                 {
 
+                    float height = instance.transform.position.y;
+                    // ブロックの通常時のサイズが１，１，１で、
+                    // 原点がブロックの下にあるため、高さを図るときに
+                    // ブロック1サイズ分が余剰にカウントされているため-１をする。
+                    height += (instance.transform.localScale.y - 1);
+                    float addHeight = maxHeight - height;
+
                     Vector3 scale = instance.transform.localScale;
-                    scale.y += maxHeight;
+                    scale.y += addHeight;
                     instance.transform.localScale = scale;
 
                 }
@@ -617,7 +824,6 @@ public class SetObject : EditorWindow
 
         }
     }
-
 
 
 
@@ -759,9 +965,8 @@ public class SetObject : EditorWindow
         for (int i = 0; i < objs.Count; i++)
         {
 
-            // ブロックは２マス間隔で置いてあるので2を割る
-            int x = Mathf.CeilToInt(objs[i].transform.position.x - minX) / 2;
-            int z = Mathf.CeilToInt(objs[i].transform.position.z - minZ) / 2;
+            int x = Mathf.CeilToInt(objs[i].transform.position.x - minX);
+            int z = Mathf.CeilToInt(objs[i].transform.position.z - minZ);
             map[x][z] = objs[i];
 
         }
