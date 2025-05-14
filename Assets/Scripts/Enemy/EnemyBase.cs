@@ -5,6 +5,8 @@ using UnityEngine;
 public class EnemyBase : MonoBehaviour
 {
 
+    [SerializeField]
+    private EnemyStatus enemyStatus = new EnemyStatus();
 
 
     // Start is called before the first frame update
