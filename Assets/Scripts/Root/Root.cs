@@ -129,7 +129,7 @@ public class Root : ISetMapInfo, IGetRoot
                     nodeDTOs[i, k].IsWalkable = true;
                     nodeDTOs[i, k].IsWaterble = true;
                     nodeDTOs[i, k].Position = new Vector2Int(stageObjs[i, k].StageWaterPos.x > 0 ? stageObjs[i, k].StageWaterPos.x : stageObjs[i, k].StageWaterPos.x + stageObjs.GetLength(0),
-                                                             stageObjs[i, k].StageWaterPos.z < 0 ? stageObjs[i, k].StageWaterPos.z : stageObjs[i, k].StageWaterPos.z + stageObjs.GetLength(1));
+                                                             stageObjs[i, k].StageWaterPos.z > 0 ? stageObjs[i, k].StageWaterPos.z : stageObjs[i, k].StageWaterPos.z + stageObjs.GetLength(1));
                     nodeDTOs[i, k].Height = stageObjs[i, k].StageWaterPos.y;
                     continue;
 
@@ -149,7 +149,7 @@ public class Root : ISetMapInfo, IGetRoot
                 }
                 nodeDTOs[i, k].IsWaterble = false;
                 nodeDTOs[i, k].Position = new Vector2Int(stageObjs[i, k].Pos.x > 0 ? stageObjs[i, k].Pos.x : stageObjs[i, k].Pos.x + stageObjs.GetLength(0),
-                                                         stageObjs[i, k].Pos.z < 0 ? stageObjs[i, k].Pos.z : stageObjs[i, k].Pos.z + stageObjs.GetLength(1));
+                                                         stageObjs[i, k].Pos.z > 0 ? stageObjs[i, k].Pos.z : stageObjs[i, k].Pos.z + stageObjs.GetLength(1));
                 nodeDTOs[i, k].Height = stageObjs[i, k].Pos.y;
 
             }
