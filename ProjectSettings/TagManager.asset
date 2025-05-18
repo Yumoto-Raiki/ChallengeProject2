@@ -5,17 +5,18 @@ TagManager:
   serializedVersion: 2
   tags:
   - Door
+  - Target
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - Stage
+  - 
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
+  - StageGround
+  - StageWall
+  - StageWater
+  - StageFacility
   - 
   - 
   - 

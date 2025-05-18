@@ -8,19 +8,25 @@ using UnityEngine;
 public class WaterMove : MonoBehaviour
 {
 
+    [SerializeField,Range(0,1),Header("沈む割合")]
+    private float _subsidenceRate = 0.3f;
+    [SerializeField, Header("実行秒数")]
+    private float _executionSeconds = 2f;
+
     private System.Random ramdom = new System.Random();
-    private Animator _animator = default;
     private Material _material = default;
 
-    private float _maxHeight = 10f;
+    Vector3 _myScale = Vector3.one;
+
+    private float _maxHeight = 30f;
 
     // Start is called before the first frame update
     private void Start()
     {
 
+        _myScale = this.transform.localScale;
         GetCompoment();
         AdjustMaterialAlpha();
-        StartAnima();
 
     }
 
@@ -30,8 +36,7 @@ public class WaterMove : MonoBehaviour
     private void GetCompoment()
     {
 
-        _animator = this.GetComponent<Animator>();
-        _material = this.GetComponent<Renderer>().material;
+        _material = this.GetComponent<Renderer>().sharedMaterial;
 
     }
 
@@ -40,23 +45,10 @@ public class WaterMove : MonoBehaviour
 
         Color color = _material.color;
         // 高いほど薄くするため反転
-        float alpha = 1 - (transform.localScale.y / _maxHeight);
+        float alpha = 1 - (_myScale.y / _maxHeight);
         color.a = alpha;
         _material.color = color;
 
     }
-
-    /// <summary>
-    /// アニメーションを開始する
-    /// </summary>
-    private async void StartAnima()
-    {
-
-        int startTime = ramdom.Next(3000);
-        await Task.Delay(startTime);
-        _animator.enabled = true;
-
-    }
-
 
 }
