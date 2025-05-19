@@ -6,7 +6,9 @@ public class SectionDTO
     /// <summary>
     /// ˆÊ’u
     /// </summary>
-    private Vector3Int _pos;
+    private Vector3Int _pos = new Vector3Int(int.MinValue, int.MinValue, int.MinValue);
+
+    private int _height = int.MinValue;
 
     /// <summary>
     /// ˆÊ’u
@@ -16,7 +18,25 @@ public class SectionDTO
     {
 
         get => _pos;
-        set => _pos = ( _pos.y < value.y) ? value : _pos;
+
+    }
+
+
+    public int Height {
+        get => _height;
+    }
+
+    public void SetInfo(Vector3Int pos,int heigth,bool isWater)
+    {
+
+        if((_height > heigth || StageWater != null) && !isWater)
+        {
+
+            return;
+
+        }
+        this._pos = pos;
+        this._height = heigth;
 
     }
 

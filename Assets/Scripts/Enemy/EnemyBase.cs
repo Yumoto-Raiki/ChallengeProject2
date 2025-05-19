@@ -60,7 +60,7 @@ public class EnemyBase : MonoBehaviour
         while (_targetObjs.Count > 0)
         {
 
-            await Task.Delay(3000);
+            await Task.Delay(1000);
             this.transform.position = _root[0];
             _root.RemoveAt(0);
 

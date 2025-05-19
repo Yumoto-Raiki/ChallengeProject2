@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -95,20 +96,28 @@ public class StageObjsManager : IGetStageObjsInfo
             }
 
         }
+        Debug.Log("X軸最大"+maxX);
+        Debug.Log("X軸最小"+minX);
+        Debug.Log("Z軸最大"+maxZ);
+        Debug.Log("Z軸最小"+minZ);
         // X軸のブロックの個数
-        int widthCount = Mathf.CeilToInt(maxX - minX)+1;
+        int widthCount = Mathf.CeilToInt(maxX - minX);
+        Debug.Log("横軸の大きさ"+widthCount);
         // Z軸のブロックの個数
-        int depthCount = Mathf.CeilToInt(maxZ - minZ)+1;
+        int depthCount = Mathf.CeilToInt(maxZ - minZ);
+        Debug.Log("奥軸の大きさ" + depthCount);
         // 枠制作
         _stageObjs = new SectionDTO[widthCount, depthCount];
         // リストに追加
         for (int i = 0; i < stageObjs.Count; i++)
         {
 
-            int x = Mathf.CeilToInt(maxX - stageObjs[i].transform.position.x);
-            int z = Mathf.CeilToInt(maxZ - stageObjs[i].transform.position.z);
+            int x = (int)(maxX - stageObjs[i].transform.position.x);
+            int z = (int)(maxZ - stageObjs[i].transform.position.z);
             _stageObjs[x,z] = new SectionDTO();
-            _stageObjs[x,z].Pos = Vector3Int.FloorToInt(stageObjs[i].transform.position);
+            Vector3Int intPos = Vector3Int.FloorToInt(stageObjs[i].transform.position);
+            int height = (int)(intPos.y + stageObjs[i].transform.localScale.y);
+            bool isWater = false;
             switch (stageObjs[i].layer)
             {
 
@@ -134,6 +143,7 @@ public class StageObjsManager : IGetStageObjsInfo
                     _stageObjs[x,z].StageWater = stageObjs[i];
                     _stageObjs[x,z].StageWaterPos = Vector3Int.FloorToInt(stageObjs[i].transform.position);
                     _stageObjs[x,z].StageWaterScale = Vector3Int.FloorToInt(stageObjs[i].transform.localScale);
+                    isWater = true;
 
                     break;
                 // 施設
@@ -149,8 +159,35 @@ public class StageObjsManager : IGetStageObjsInfo
                     break;
 
             }
+            _stageObjs[x, z].SetInfo(intPos, height,isWater);
 
         }
+        for (int i = 0; i < _stageObjs.GetLength(0); i++)
+        {
+
+            string text = "";
+            for (int j = 0; j < _stageObjs.GetLength(1); j++)
+            {
+
+                text += ".";
+                if (_stageObjs[i, j] != null)
+                {
+
+                    text += "1";
+
+                }
+                else
+                {
+
+                    text += "0"; 
+
+                }
+
+            }
+            Debug.Log(text);
+
+        }
+        Debug.Log("<Color=red>----------------------------------------------------------------------------------</color>");
 
     }
     

@@ -59,7 +59,9 @@ public class Root : ISetMapInfo, IGetRoot
             }
 
         }
-        Debug.Log("開始位置"+startPos);
+
+        Debug.Log("開始位置" + startPos);
+        Debug.Log("ターゲット位置" + targetPos);
         // 開始位置のインデックス
         Vector2Int startindex = default;
         // ターゲットの入るインデックス
@@ -77,25 +79,28 @@ public class Root : ISetMapInfo, IGetRoot
                     continue;
 
                 }
-                Debug.Log(dto.Position +" == "+ startPos);
-                if (Vector2.Distance(dto.Position, startPos) < 2f)
+                //Debug.Log(dto.Position +" == "+ startPos);
+                if (Vector2.Distance(dto.Position, startPos) < 1f)
                 {
 
                     startindex.x = i;
                     startindex.y = k;
+                    Debug.Log("開始インデックス" + startindex);
 
                 }
-                if (Vector2.Distance(dto.Position, targetPos) < 2f)
+                if (Vector2.Distance(dto.Position, targetPos) < 1f)
                 {
 
                     targetindex.x = i;
                     targetindex.y = k;
+                    Debug.Log("ターゲットインデックス" + targetindex);
 
                 }
 
             }
 
         }
+        Debug.Log("開始インデックス" + startindex);
         return (startindex, targetindex);
 
     }
@@ -109,6 +114,7 @@ public class Root : ISetMapInfo, IGetRoot
     {
 
         NodeDTO[,] nodeDTOs = new NodeDTO[stageObjs.GetLength(0),stageObjs.GetLength(1)];
+        int[,] chacks = new int[stageObjs.GetLength(0), stageObjs.GetLength(1)];
         for (int i = 0; i < nodeDTOs.GetLength(0); i++)
         {
 
@@ -121,41 +127,54 @@ public class Root : ISetMapInfo, IGetRoot
                     continue;
 
                 }
+                /* 内部（DTO）で水が優先させるようになっている */
                 nodeDTOs[i, k] = new NodeDTO();
-                // 水があるとき最優先
-                if (stageObjs[i,k].StageWater != null)
+                chacks[i, k] = 1;
+                if(stageObjs[i, k].StageWater != null)
                 {
 
                     nodeDTOs[i, k].IsWalkable = true;
                     nodeDTOs[i, k].IsWaterble = true;
-                    nodeDTOs[i, k].Position = new Vector2Int(stageObjs[i, k].StageWaterPos.x > 0 ? stageObjs[i, k].StageWaterPos.x : stageObjs[i, k].StageWaterPos.x + stageObjs.GetLength(0),
-                                                             stageObjs[i, k].StageWaterPos.z > 0 ? stageObjs[i, k].StageWaterPos.z : stageObjs[i, k].StageWaterPos.z + stageObjs.GetLength(1));
-                    nodeDTOs[i, k].Height = stageObjs[i, k].StageWaterPos.y;
-                    continue;
-
-                }
-                // その他
-                if(stageObjs[i, k].StageWall != null)
-                {
-
-                    nodeDTOs[i, k].IsWalkable = false;
 
                 }
                 else
                 {
 
-                    nodeDTOs[i, k].IsWalkable = true;
+                    // その他
+                    if (stageObjs[i, k].StageWall != null)
+                    {
+
+                        nodeDTOs[i, k].IsWalkable = false;
+
+                    }
+                    else
+                    {
+
+                        nodeDTOs[i, k].IsWalkable = true;
+
+                    }
+                    nodeDTOs[i, k].IsWaterble = false;
 
                 }
-                nodeDTOs[i, k].IsWaterble = false;
-                nodeDTOs[i, k].Position = new Vector2Int(stageObjs[i, k].Pos.x > 0 ? stageObjs[i, k].Pos.x : stageObjs[i, k].Pos.x + stageObjs.GetLength(0),
-                                                         stageObjs[i, k].Pos.z > 0 ? stageObjs[i, k].Pos.z : stageObjs[i, k].Pos.z + stageObjs.GetLength(1));
-                nodeDTOs[i, k].Height = stageObjs[i, k].Pos.y;
+                nodeDTOs[i, k].Position = new Vector2Int(stageObjs[i, k].Pos.x ,stageObjs[i, k].Pos.z );
+                nodeDTOs[i, k].Height = stageObjs[i, k].Height;
+                chacks[i, k] = 1;
+            }
+            string text = "";
+            int count = 0;
+            for (int j = 0; j < nodeDTOs.GetLength(1); j++)
+            {
+
+                count++;
+                text += chacks[i, j] + ",";
 
             }
+            Debug.Log(text);
 
         }
         Debug.Log("完成"+nodeDTOs.Length);
+        Debug.Log("-------------------------------------------------------------------------------------------------------");
+
         _nodeDTOs = nodeDTOs;
 
     }
@@ -170,6 +189,7 @@ public class Root : ISetMapInfo, IGetRoot
     {
 
         Debug.Log("開始位置"+startPos.x+","+startPos.y);
+        Debug.Log("ターゲット位置"+ targetPos.x+","+ targetPos.y);
         NodeDTO startNode = _nodeDTOs[startPos.x,startPos.y];
         NodeDTO goalNode = _nodeDTOs[targetPos.x,targetPos.y];
         // 調べていないノード
@@ -180,6 +200,7 @@ public class Root : ISetMapInfo, IGetRoot
         startNode.GCost = 0;
         // ゴールまでの予想コスト
         startNode.HCost = GetHeuristic(startPos, targetPos);
+        Debug.Log("総こすと"+startNode.FCost);
         // 調べていないノードがなくなるまで周回
         while (openList.Count > 0)
         {
@@ -205,7 +226,6 @@ public class Root : ISetMapInfo, IGetRoot
                 {
 
                     continue;
-
                 }
                 // 隣接ノードのコスト
                 float tentativeGCost = currentNode.GCost + 1; 
@@ -215,6 +235,7 @@ public class Root : ISetMapInfo, IGetRoot
                     Mathf.Abs(currentNode.Height - nextNode.Height) < climbHeight)
                 {
 
+                    Debug.Log("リストに追加");
                     // 移動コスト,ゴールまでの予想コスト,親ノード（ノードを呼び出したノード）を設定する
                     nextNode.GCost = tentativeGCost;
                     nextNode.HCost = GetHeuristic(nextNode.Position, targetPos);
@@ -263,7 +284,7 @@ public class Root : ISetMapInfo, IGetRoot
             new Vector2Int(-1, 0)
 
         };
-        foreach (var dir in directions)
+        foreach (Vector2Int dir in directions)
         {
 
             Vector2Int newPos = node.Position + dir;
@@ -271,6 +292,12 @@ public class Root : ISetMapInfo, IGetRoot
                 newPos.y >= 0 && newPos.y < nodeDTOs.GetLength(1))
             {
 
+                if(nodeDTOs[newPos.x, newPos.y] == null)
+                {
+
+                   continue;
+
+                }
                 chackRoot.Add(nodeDTOs[newPos.x, newPos.y]);
 
             }
@@ -296,7 +323,7 @@ public class Root : ISetMapInfo, IGetRoot
         while (currentNode != null)
         {
 
-            Vector3 pos = new Vector3(currentNode.Position.x, currentNode.Height, currentNode.Position.y); 
+            Vector3 pos = new Vector3(currentNode.Position.x, currentNode.Height+1, currentNode.Position.y); 
             // ノードをルートに追加
             root.Add(pos);
             // 次にたどるノードを設定
