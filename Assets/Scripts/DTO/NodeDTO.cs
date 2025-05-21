@@ -6,21 +6,44 @@ using UnityEngine;
 public class NodeDTO
 {
 
-    // ノードの位置
-    public Vector2Int Position { get; set; }
-    // 高さ
-    public int Height { get; set; }
-    // 水かどうか
-    public bool IsWaterble { get; set; }
-    // 通行可能かどうか
-    public bool IsWalkable { get; set; }
-    // 開始点からこのノードまでのコスト
-    public float GCost { get; set; } 
-    // このノードから目標点までの推定コスト
-    public float HCost { get; set; }
-    // 総コスト
-    public float FCost => GCost + HCost;
-    // 経路再構築のための親ノード
+    /// <summary>
+    /// ノードの位置
+    /// </summary>
+    public Vector2Int IndexPosition { get; set; }
+    /// <summary>
+    /// オブジェクトの位置
+    /// </summary>
+    public Vector2 Position { get; set; }
+    /// <summary>
+    /// Intに正規化した高さ
+    /// </summary>
+    public int IntHeight { get; set; }
+    /// <summary>
+    /// 高さ
+    /// </summary>
+    public float Height { get; set; }
+    /// <summary>
+    /// オブジェクトのレイヤーのステート
+    /// </summary>
+    public ObjectLayerState LayerState { get; set; }
+
+    // ここからノード----------------------------------------
+
+    /// <summary>
+    /// 開始点からこのノードまでのコスト
+    /// </summary>
+    public float StartTOCurrentCost { get; set; }
+    /// <summary>
+    /// このノードから目標点までの推定コスト
+    /// </summary>
+    public float CurrentTOGoalCost { get; set; }
+    /// <summary>
+    /// 総コスト
+    /// </summary>
+    public float TotalCost => StartTOCurrentCost + CurrentTOGoalCost;
+    /// <summary>
+    /// 経路再構築のための親ノード
+    /// </summary>
     public NodeDTO Parent { get; set; }
 
 }

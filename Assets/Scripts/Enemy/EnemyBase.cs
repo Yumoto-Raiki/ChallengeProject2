@@ -12,7 +12,7 @@ public class EnemyBase : MonoBehaviour
 
     private static List<GameObject> _targetObjs = default;
 
-    //protected IGetRoot _iGetRoot = new Root();
+    protected IGetRoot _iGetRoot = new Root();
 
     protected List<Vector3> _root = new List<Vector3>(); 
 
@@ -27,7 +27,7 @@ public class EnemyBase : MonoBehaviour
         if(targetObj != null)
         {
 
-            //_root = await _iGetRoot.GetRoot(this.transform.position, targetObj.transform.position, _enemyStatusDTO.ClimbHeight);
+            _root = await _iGetRoot.GetRoot(this.transform.position, targetObj.transform.position, _enemyStatusDTO.ClimbHeight);
             Move();
 
         }
@@ -57,11 +57,12 @@ public class EnemyBase : MonoBehaviour
     protected async void Move()
     {
 
-        while (_targetObjs.Count > 0)
+        while (_targetObjs.Count-1 > 0)
         {
 
-            await Task.Delay(1000);
+            await Task.Delay(500);
             this.transform.position = _root[0];
+            Debug.Log("位置" + this.transform.position + "残りルート" + _root.Count());
             _root.RemoveAt(0);
 
         }

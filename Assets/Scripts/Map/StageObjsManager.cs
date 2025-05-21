@@ -115,15 +115,9 @@ public class StageObjsManager : IGetStageObjsInfo
         for (int i = 0; i < stageObjs.Count; i++)
         {
 
-            int x = (int)(maxX - stageObjs[i].transform.position.x);
-            int z = (int)(maxZ - stageObjs[i].transform.position.z);
+            int x = Mathf.RoundToInt(stageObjs[i].transform.position.x + Mathf.Abs(minX));
+            int z = Mathf.RoundToInt(stageObjs[i].transform.position.z + Mathf.Abs(minZ));
             _stageObjs[x,z] = new SectionDTO();
-            if(x == 1 ||  z == 29)
-            {
-
-                Debug.LogError(stageObjs[i].name);
-
-            }
             Vector3 pos = stageObjs[i].transform.position;
             float height = pos.y + stageObjs[i].transform.localScale.y;
             // ƒŒƒCƒ„[Žæ“¾
@@ -166,33 +160,33 @@ public class StageObjsManager : IGetStageObjsInfo
             _stageObjs[x, z].SetInfo(stageObjs[i], pos, height, layerStatus);
 
         }
-        for (int i = 0; i < _stageObjs.GetLength(0); i++)
-        {
+        //for (int i = 0; i < _stageObjs.GetLength(0); i++)
+        //{
 
-            string text = "";
-            for (int j = 0; j < _stageObjs.GetLength(1); j++)
-            {
+        //    string text = "";
+        //    for (int j = 0; j < _stageObjs.GetLength(1); j++)
+        //    {
 
-                text += ".";
-                if (_stageObjs[i, j] != null)
-                {
+        //        text += ".";
+        //        if (_stageObjs[i, j] != null)
+        //        {
 
-                    text += "1";
+        //            text += _stageObjs[i,j].Pos;
 
-                }
-                else
-                {
+        //        }
+        //        else
+        //        {
 
-                   // Debug.LogError(i+","+ j);
-                    text += "0"; 
+        //            // Debug.LogError(i+","+ j);
+        //            text += "0";
 
-                }
+        //        }
 
-            }
-            Debug.Log(text);
+        //    }
+        //    Debug.Log(text);
 
-        }
-        Debug.Log("<Color=red>----------------------------------------------------------------------------------</color>");
+        //}
+        //Debug.Log("<Color=red>----------------------------------------------------------------------------------</color>");
 
     }
     

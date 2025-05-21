@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
     private LayerMask _targetLayers = default;
 
     IGetStageObjsInfo _getStageObjsInfo = new StageObjsManager();
-    //ISetMapInfo _setMapInfo = new Root();
+    ISetMapInfo _setMapInfo = new Root();
 
     GameState _gameState = GameState.StagePreparation;
 
@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
                 // 取得処理
                 _getStageObjsInfo.GetStageObjs();
                 // RootクラスにRoot制作に必要な情報を渡す
-                //_setMapInfo.SetNodeDTOList(_getStageObjsInfo.StageObjs);
+                _setMapInfo.SetNodeDTOList(_getStageObjsInfo.StageObjs);
 
                 break;
 
