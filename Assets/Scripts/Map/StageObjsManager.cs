@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 
 /// <summary>
 /// ステージ役のオブジェクトを管理する
@@ -40,18 +41,20 @@ public class StageObjsManager : IGetStageObjsInfo
 
         GameObject[] allObjects = GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
         List<GameObject> stageObjs = new List<GameObject>();
-
+        HashSet<LayerMask> masks = new HashSet<LayerMask>();
         foreach (GameObject obj in allObjects)
         {
 
             if (((1 << obj.layer) & _targetLayers) != 0)
             {
 
+                masks.Add(obj.layer);
                 stageObjs.Add(obj);
 
             }
 
         }
+        Debug.Log(masks.Count);
         if(stageObjs.Count == 0)
         {
 
@@ -115,51 +118,52 @@ public class StageObjsManager : IGetStageObjsInfo
             int x = (int)(maxX - stageObjs[i].transform.position.x);
             int z = (int)(maxZ - stageObjs[i].transform.position.z);
             _stageObjs[x,z] = new SectionDTO();
-            Vector3Int intPos = Vector3Int.FloorToInt(stageObjs[i].transform.position);
-            int height = (int)(intPos.y + stageObjs[i].transform.localScale.y);
-            bool isWater = false;
+            if(x == 1 ||  z == 29)
+            {
+
+                Debug.LogError(stageObjs[i].name);
+
+            }
+            Vector3 pos = stageObjs[i].transform.position;
+            float height = pos.y + stageObjs[i].transform.localScale.y;
+            // レイヤー取得
+            ObjectLayerState layerStatus = ObjectLayerState.NULL;
             switch (stageObjs[i].layer)
             {
 
                 // 地面
                 case 6:
 
-                    _stageObjs[x,z].StageGround = stageObjs[i];
-                    _stageObjs[x,z].StageGroundPos = Vector3Int.FloorToInt(stageObjs[i].transform.position);
-                    _stageObjs[x,z].StageGroundScale = Vector3Int.FloorToInt(stageObjs[i].transform.localScale);
+                    layerStatus = ObjectLayerState.GROUND;
                     
                     break;
                 // 壁
                 case 7:
 
-                    _stageObjs[x,z].StageWall = stageObjs[i];
-                    _stageObjs[x,z].StageWallPos = Vector3Int.FloorToInt(stageObjs[i].transform.position);
-                    _stageObjs[x,z].StageWallScale = Vector3Int.FloorToInt(stageObjs[i].transform.localScale);
+                    layerStatus = ObjectLayerState.WALL;
 
                     break;
                 // 水
                 case 8:
 
-                    _stageObjs[x,z].StageWater = stageObjs[i];
-                    _stageObjs[x,z].StageWaterPos = Vector3Int.FloorToInt(stageObjs[i].transform.position);
-                    _stageObjs[x,z].StageWaterScale = Vector3Int.FloorToInt(stageObjs[i].transform.localScale);
-                    isWater = true;
+                    layerStatus = ObjectLayerState.WATER;
 
                     break;
                 // 施設
                 case 9:
 
-                    _stageObjs[x,z].StageFacility = stageObjs[i];
-                    _stageObjs[x,z].StageFacilityPos = Vector3Int.FloorToInt(stageObjs[i].transform.position);
-                    _stageObjs[x,z].StageFacilityScale = Vector3Int.FloorToInt(stageObjs[i].transform.localScale);
+                    layerStatus = ObjectLayerState.FACILITY;
 
                     break;
                 default:
 
+                    layerStatus = ObjectLayerState.NULL;
+
                     break;
 
             }
-            _stageObjs[x, z].SetInfo(intPos, height,isWater);
+            // 情報セット
+            _stageObjs[x, z].SetInfo(stageObjs[i], pos, height, layerStatus);
 
         }
         for (int i = 0; i < _stageObjs.GetLength(0); i++)
@@ -179,6 +183,7 @@ public class StageObjsManager : IGetStageObjsInfo
                 else
                 {
 
+                   // Debug.LogError(i+","+ j);
                     text += "0"; 
 
                 }
