@@ -38,9 +38,13 @@ public class NodeDTO
     /// </summary>
     public float CurrentTOGoalCost { get; set; }
     /// <summary>
+    /// 壁に近いか判断するコスト
+    /// </summary>
+    public float WallPenalty { get; set; } 
+    /// <summary>
     /// 総コスト
     /// </summary>
-    public float TotalCost => StartTOCurrentCost + CurrentTOGoalCost;
+    public float TotalCost => StartTOCurrentCost + CurrentTOGoalCost + WallPenalty;
     /// <summary>
     /// 経路再構築のための親ノード
     /// </summary>

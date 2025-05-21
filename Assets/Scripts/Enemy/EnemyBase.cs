@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 
-public class EnemyBase : MonoBehaviour
+public class EnemyBase : MonoBehaviour,ITakeDamage
 {
 
     [SerializeField]
@@ -57,16 +58,49 @@ public class EnemyBase : MonoBehaviour
     protected async void Move()
     {
 
-        while (_targetObjs.Count-1 > 0)
+        try
+        {
+            while (_targetObjs.Count() > 0)
+            {
+
+                await Task.Delay(150);
+                if (_root.Count() - 1 < 0)
+                {
+
+                    return;
+
+                }
+                this.transform.position = _root[0];
+                _root.RemoveAt(0);
+
+            }
+
+        }
+        catch (Exception e)
         {
 
-            await Task.Delay(500);
-            this.transform.position = _root[0];
-            Debug.Log("位置" + this.transform.position + "残りルート" + _root.Count());
-            _root.RemoveAt(0);
+
+        }
+
+       
+
+    }
+
+    /// <summary>
+    /// ダメージ処理
+    /// </summary>
+    /// <param name="damage"></param>
+    public void TakeDamage(int damage)
+    {
+
+        Debug.Log("ダメージ処理");
+        _enemyStatusDTO.Hp -= damage;
+        if(_enemyStatusDTO.Hp < 0)
+        {
+
+            Destroy(this.gameObject);
 
         }
 
     }
-
 }

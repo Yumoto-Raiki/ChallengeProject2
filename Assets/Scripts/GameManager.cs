@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 /// <summary>
@@ -7,6 +8,9 @@ using UnityEngine;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
+
+    [SerializeField]
+    private Tower _toewr = default;
 
     /// <summary>
     /// ステージ用オブジェクトのレイヤー
@@ -40,7 +44,7 @@ public class GameManager : MonoBehaviour
                 _getStageObjsInfo.GetStageObjs();
                 // RootクラスにRoot制作に必要な情報を渡す
                 _setMapInfo.SetNodeDTOList(_getStageObjsInfo.StageObjs);
-
+                _toewr.SectionDTOs = _getStageObjsInfo.StageObjs;
                 break;
 
         }

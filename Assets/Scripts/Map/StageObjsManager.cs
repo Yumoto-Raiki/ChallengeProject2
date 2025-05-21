@@ -54,7 +54,6 @@ public class StageObjsManager : IGetStageObjsInfo
             }
 
         }
-        Debug.Log(masks.Count);
         if(stageObjs.Count == 0)
         {
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -20,7 +21,7 @@ public class Root : ISetMapInfo, IGetRoot
     {
 
         NodeDTO[,] nodeDTOs = new NodeDTO[stageObjs.GetLength(0), stageObjs.GetLength(1)];
-        Vector2Int[,] chacks = new Vector2Int[stageObjs.GetLength(0), stageObjs.GetLength(1)];
+        //Vector2Int[,] chacks = new Vector2Int[stageObjs.GetLength(0), stageObjs.GetLength(1)];
         // 配列"X"軸の最小値の絶対値
         int arrayXMinAbs = Mathf.RoundToInt(stageObjs[0, 0].Pos.x);
         arrayXMinAbs = Mathf.Abs(arrayXMinAbs);
@@ -48,25 +49,50 @@ public class Root : ISetMapInfo, IGetRoot
                 nodeDTOs[i, k].IndexPosition = (Vector2Int.right * x) + (Vector2Int.up * z);
                 nodeDTOs[i, k].Position = Vector2.right * stageObjs[i, k].Pos.x + Vector2.up * stageObjs[i, k].Pos.z;
                 nodeDTOs[i, k].IntHeight = Mathf.RoundToInt(stageObjs[i, k].Pos.y + stageObjs[i, k].Height);
-                nodeDTOs[i, k].Height = stageObjs[i, k].Pos.y + stageObjs[i, k].Height;
+                nodeDTOs[i, k].Height = stageObjs[i, k].Height;
                 nodeDTOs[i, k].LayerState = stageObjs[i, k].ObjectLayerState;
-                chacks[i, k] = (Vector2Int.right * x) + (Vector2Int.up * z);
+
+                // --- 壁ペナルティをここで追加 ---
+                int wallCount = 0;
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    for (int dz = -1; dz <= 1; dz++)
+                    {
+                        if (dx == 0 && dz == 0) continue; // 自身を除く
+
+                        int nx = i + dx;
+                        int nz = k + dz;
+
+                        if (nx >= 0 && nx < stageObjs.GetLength(0) && nz >= 0 && nz < stageObjs.GetLength(1))
+                        {
+                            if (stageObjs[nx, nz]?.ObjectLayerState == ObjectLayerState.WALL)
+                            {
+                                wallCount++;
+                            }
+                        }
+                    }
+                }
+
+                nodeDTOs[i, k].WallPenalty = wallCount * 1000f; // ←ここでペナルティ加算（数 × 重み）
+
+
+                //chacks[i, k] = (Vector2Int.right * x) + (Vector2Int.up * z);
 
             }
-            string text = "";
-            int count = 0;
-            for (int j = 0; j < nodeDTOs.GetLength(1); j++)
-            {
+            //string text = "";
+            //int count = 0;
+            //for (int j = 0; j < nodeDTOs.GetLength(1); j++)
+            //{
 
-                count++;
-                text += chacks[i, j] + ",";
+            //    count++;
+            //    text += chacks[i, j] + ",";
 
-            }
-            Debug.Log(text);
+            //}
+            //Debug.Log(text);
 
         }
-        Debug.Log("完成" + nodeDTOs.Length);
-        Debug.Log("-------------------------------------------------------------------------------------------------------");
+        //Debug.Log("完成" + nodeDTOs.Length);
+        //Debug.Log("-------------------------------------------------------------------------------------------------------");
         // キャッシュ
         _nodeDTOs = nodeDTOs;
 
@@ -148,8 +174,6 @@ public class Root : ISetMapInfo, IGetRoot
 
                     startIndex.x = i;
                     startIndex.y = k;
-                    Debug.Log("開始のインデックス" + startIndex);
-                    Debug.Log("開始のインデックス位置" + nordDTO.IndexPosition);
 
                 }
                 if (Vector2.Distance(nordDTO.Position, targetPos) < 1f)
@@ -157,8 +181,6 @@ public class Root : ISetMapInfo, IGetRoot
 
                     targetIndex.x = i;
                     targetIndex.y = k;
-                    Debug.Log("ターゲットのインデックス" + targetIndex);
-                    Debug.Log("ターゲットのインデックス位置" + nordDTO.IndexPosition);
 
                 }
 
@@ -174,7 +196,8 @@ public class Root : ISetMapInfo, IGetRoot
         else
         {
 
-          
+
+            Debug.Log("開始のインデックス" + startIndex);
 
         }
         if (targetIndex == debugTargetIndex)
@@ -186,7 +209,8 @@ public class Root : ISetMapInfo, IGetRoot
         else
         {
 
-          
+
+            Debug.Log("ターゲットのインデックス" + targetIndex);
 
         }
         return (startIndex, targetIndex);
@@ -224,7 +248,7 @@ public class Root : ISetMapInfo, IGetRoot
             // 現在調べるノードを取り出す（調べていないノードのリストの中からCOSTが一番低いもの）
             NodeDTO currentNode = openList.OrderBy(n => n.TotalCost).First();
             //Debug.Log("位置"+currentNode.Position);
-            Debug.Log("インデックスの位置"+currentNode.IndexPosition);
+           // Debug.Log("インデックスの位置"+currentNode.IndexPosition);
             // ゴールした時
             if (currentNode == targetNode)
             {
@@ -235,22 +259,30 @@ public class Root : ISetMapInfo, IGetRoot
             // 現在のノードを見終わったノードに移す
             openList.Remove(currentNode);
             closedSet.Add(currentNode);
+
+            bool isNearWall = false;
             // 現在のノードの周囲のノードを調べていないノードに設定
             foreach (NodeDTO nextNode in GetNeighbors(_nodeDTOs, currentNode))
             {
-                //Debug.Log("周囲のインデックスの位置" + nextNode.IndexPosition);
-                // 移動できないまたはすでに調べたノードの時
-                if (nextNode.LayerState == ObjectLayerState.WALL || closedSet.Contains(nextNode))
+
+                // 登れない高さ
+                if (Mathf.Abs(currentNode.Height - nextNode.Height) > climbHeight)
                 {
 
+                    continue;
+
+                }
+
+                // すでに調べたノードはスキップ
+                if (closedSet.Contains(nextNode))
+                {
                     continue;
                 }
                 // 隣接ノードのコスト
                 float tentativeGCost = currentNode.StartTOCurrentCost + 1;
-                // 探索するノードに入っていない
-                // 登れない高さ
-                if (tentativeGCost < nextNode.StartTOCurrentCost || !openList.Contains(nextNode) ||
-                    Mathf.Abs(currentNode.Height - nextNode.Height) < climbHeight)
+                // すでに探索するノードに入っている
+                // すでに調べたノードの時
+                if (tentativeGCost < nextNode.StartTOCurrentCost || !openList.Contains(nextNode))
                 {
 
                     // 移動コスト,ゴールまでの予想コスト,親ノード（ノードを呼び出したノード）を設定する
@@ -305,7 +337,6 @@ public class Root : ISetMapInfo, IGetRoot
         {
 
             Vector2Int newPos = currentNode.IndexPosition + dir;
-            Debug.Log("周囲のインデックスの位置"+newPos);
             if (newPos.x >= 0 && newPos.x < nodeDTOs.GetLength(0) &&
                 newPos.y >= 0 && newPos.y < nodeDTOs.GetLength(1))
             {
@@ -316,7 +347,6 @@ public class Root : ISetMapInfo, IGetRoot
                     continue;
 
                 }
-                Debug.Log("実際の周囲のインデックスの位置" + nodeDTOs[newPos.x, newPos.y].IndexPosition);
                 chackRoot.Add(nodeDTOs[newPos.x, newPos.y]);
 
             }
