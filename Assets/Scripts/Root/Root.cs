@@ -10,7 +10,12 @@ public class Root : ISetMapInfo, IGetRoot
     /// <summary>
     /// SectionDTOをNodeに変換した結果を入れる
     /// </summary>
-    private static NodeDTO[,] _nodeDTOs = default;
+    private static NodeDTO[,] _nodeDTOs1 = default;
+
+    /// <summary>
+    /// SectionDTOをNodeに変換した結果を入れる
+    /// </summary>
+    private NodeDTO[,] _nodeDTOs = default;
 
     /// <summary>
     /// SectionDTOリストからNodeDTOリストへ変換
@@ -94,7 +99,7 @@ public class Root : ISetMapInfo, IGetRoot
         //Debug.Log("完成" + nodeDTOs.Length);
         //Debug.Log("-------------------------------------------------------------------------------------------------------");
         // キャッシュ
-        _nodeDTOs = nodeDTOs;
+        _nodeDTOs1 = nodeDTOs;
 
     }
 
@@ -106,6 +111,8 @@ public class Root : ISetMapInfo, IGetRoot
     public async Task<List<Vector3>> GetRoot(Vector3 startPos, Vector3 targetPos, float climbHeight)
     {
 
+        // キャッシュを読み込む
+        _nodeDTOs = _nodeDTOs1;
         Vector2 v2StartPos = Vector2.right * startPos.x + Vector2.up * startPos.z;
         Vector2 v2TargetPos = Vector2.right * targetPos.x + Vector2.up * targetPos.z;
         (Vector2Int startIndex, Vector2Int targetIndex) = await SerchIndex(v2StartPos, v2TargetPos);
@@ -120,7 +127,7 @@ public class Root : ISetMapInfo, IGetRoot
     {
 
         /* 探索する配列確保まで待つ */
-        if (_nodeDTOs == null)
+        if (_nodeDTOs1 == null)
         {
 
             try
@@ -131,9 +138,10 @@ public class Root : ISetMapInfo, IGetRoot
                 {
 
                     await Task.Delay(3000);
-                    if (_nodeDTOs != null)
+                    if (_nodeDTOs1 != null)
                     {
 
+                        _nodeDTOs = _nodeDTOs1;
                         break;
 
                     }
